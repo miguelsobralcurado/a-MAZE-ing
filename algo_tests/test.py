@@ -1,5 +1,6 @@
+from typing import List, Optional, Generator, Tuple
+from enum import Enum
 import random
-from typing import List, Optional, Generator
 
 
 class MazeGrid:
@@ -10,7 +11,7 @@ class MazeGrid:
         self.pat_coords: List[tuple[int, int]] = []
 
     def initialize_all_closed(self) -> None:
-        self.cells = [15 for _ in range(self.width)
+        self.cells = [[15 for _ in range(self.width)]
                       for _ in range(self.height)]
         
     def add_pattern(self, pattern: List[str]) -> list:
@@ -100,11 +101,75 @@ class MazeGenerator:
             return
 
     def prim(self) -> Generator:
-        not_included = self.maze_grid.cells
-        included = []
-        logo = self.maze_grid.pat_coords
+        generator = PrimsAlgorithm(self.maze_grid)
+        return generator.generate()
 
-        start = random.random()
+
+class PrimsAlgorithm:
+    def __init__(self, maze_grid: MazeGrid):
+         # indices of the a node's neighbours in the adjacency list
+        self.NORTH = 1
+        self.EAST = 2
+        self.SOUTH = 4
+        self.WEST = 8
+        self.generate_mst(self, maze_grid)
+
+    def all_visited(grid):
+        return all(all(row) for row in grid)
+
+    @staticmethod
+    def ignore_logo(visited, maze_grid) -> List[List[bool]]:
+        for node in maze_grid.pat_coords:
+            y, x = node
+            visited[y][x] = True
+            visited_count += 1
+
+    def generate_mst(self, maze_grid: MazeGrid) -> Generator:
+        visited: List[List[bool]] = [[False for _ in range(maze_grid.width)]
+                                     for _ in range(maze_grid.height)]
+        visited_count = 0
+
+        if maze_grid.pat_coords:
+            visited = self.ignore_logo(visited, maze_grid, visited_count)
+
+        while visited_count < maze_grid.width ** 2:
+            edges_pool = self.get_available_edges(visited)
+            edge = random.choice(edges_pool)
+            node, next_node = edge
+            direction
+
+    def get_available_edges(self, visited) -> List[Tuple[tuple, tuple]]:
+        edges_pool = []
+
+        for row in enumerate(visited):
+        # get y = row in [index, list] pairs
+            for col in enumerate(row[1]):
+            #get x = col in [index, bool] pairs
+                if col[1]:
+                    node = (row[0], col[0])
+
+                    if row[0] > 0 and not visited[row[0] - 1][col[0]]:
+                        # all rows except top one have top neighbours
+                        top_node = (row[0] - 1, col[0])
+                        edges_pool.append(node, top_node)
+
+                    if col[0] > 0 and not visited[row[0]][col[0] - 1]:
+                        # all columns except first have left neighbours
+                        left_node = (row[0], col[0] - 1)
+                        edges_pool.append(node, left_node)
+
+                    if row[0] < len(visited) - 1 and not visited[row[0] + 1][col[0]]:
+                        # all rows except last one have bot neighbours
+                        bot_node = (row[0] + 1, col[0])
+                        edges_pool.append(node, bot_node)
+
+                    if col[0] < len(visited) - 1 and not visited[row[0]][col[0] + 1]:
+                        # all columns except last have right neighbours
+                        right_node = (row[0], col[0] - 1)
+                        edges_pool.append(node, right_node)
+
+        return edges_pool
+
 
 
 maze: List[List[int]] = {
