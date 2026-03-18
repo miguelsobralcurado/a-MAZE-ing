@@ -1,5 +1,4 @@
 from typing import List, Optional, Generator, Tuple
-from enum import Enum
 import random
 
 
@@ -27,21 +26,18 @@ class MazeGrid:
 class MazeGenerator:
     def __init__(self, width: int, height: int, seed: Optional[int],
                  perfect: bool, visual: bool,
-                 algorithm: str = "dfs", density: float = 0.06):
+                 algorithm: str = "prims"):
         self.width = width
         self.height = height
-        self.seed = seed
         self.perfect = perfect
         self.choose_algorithm(algorithm)
-        self.random = random.Random(seed)
-        self.density = density
+        self.random = random.Random.seed(seed)
         self.visual = visual
-        self._42 = False
         self.maze_grid: MazeGrid
 
     # Create grid
     def choose_algorithm(self, algorithm: str) -> None:
-        self.algorithm = algorithm.lower().strip() if algorithm else "dfs"
+        self.algorithm = algorithm.lower().strip()
 
     def initialize(self, entry: tuple[int, int],
                  exit: tuple[int, int]) -> MazeGrid:
@@ -81,62 +77,66 @@ class MazeGenerator:
             "....#.#####"
         ]  # 11x9
 
-        if self._42 is False:
-            return self.maze_grid
-        elif maze.width < 10 or maze.height < 10:
+        if self.width < 10 or self.height < 10:
             raise ValueError("No 42 pattern, maze size too small")
-        if maze.width < 28 or maze.height < 20:
+        if self.width < 28 or self.height < 20:
             pattern = pat_small
-        elif maze.width < 45 or maze.height < 30:
+        elif self.width < 45 or self.height < 30:
             pattern = pat_med
         else:
             pattern = pat_big
         self.maze_grid.add_pattern(pattern)
         return self.maze_grid.pat_coords
 
-    def generate(self) -> Generator:
-        if self.algorithm == "prim":
-            return self.prim
+    def generate(self) -> Generator[List[List[int]], None, None]:
+        if self.algorithm == "prims":
+            return self.prims()
         elif self.algorithm == "dfs":
-            return
+            raise NotImplementedError("DFS not implemented yet")
 
-    def prim(self) -> Generator:
-        generator = PrimsAlgorithm(self.maze_grid)
-        return generator.generate()
+    def prims(self) -> Generator[List[List[int]], None, None]:
+        generator = PrimsAlgorithm(self.random, self.perfect)
+        return generator.generate_mst(self.maze_grid)
 
 
 class PrimsAlgorithm:
-    def __init__(self, maze_grid: MazeGrid):
-         # indices of the a node's neighbours in the adjacency list
+    def __init__(self):
+         # Bitmask values for walls
         self.NORTH = 1
         self.EAST = 2
         self.SOUTH = 4
         self.WEST = 8
-        self.generate_mst(self, maze_grid)
-
-    def all_visited(grid):
-        return all(all(row) for row in grid)
 
     @staticmethod
     def ignore_logo(visited, maze_grid) -> List[List[bool]]:
         for node in maze_grid.pat_coords:
             y, x = node
             visited[y][x] = True
-            visited_count += 1
+        return visited
 
-    def generate_mst(self, maze_grid: MazeGrid) -> Generator:
+    def generate_mst(self, maze_grid: MazeGrid) -> Generator[List[List[int]], None, None]:
         visited: List[List[bool]] = [[False for _ in range(maze_grid.width)]
                                      for _ in range(maze_grid.height)]
         visited_count = 0
 
         if maze_grid.pat_coords:
-            visited = self.ignore_logo(visited, maze_grid, visited_count)
+            visited = self.ignore_logo(visited, maze_grid)
+            visited_count += len(maze_grid.pat_coords)
 
-        while visited_count < maze_grid.width ** 2:
+        start = (0, 0)
+        visited[start[0]][start[1]] = True
+        visited_count += 1
+        total = maze_grid.width * maze_grid.height
+        while visited_count < total:
             edges_pool = self.get_available_edges(visited)
-            edge = random.choice(edges_pool)
+            edge = self.random.choice(edges_pool)
             node, next_node = edge
-            direction
+            maze_grid.cells = self.open_walls(maze_grid.cells, node, next_node)
+            y, x = next_node
+            visited[y][x] = True
+            visited_count += 1
+            yield maze_grid.cells
+        return maze_grid.cells
 
     def get_available_edges(self, visited) -> List[Tuple[tuple, tuple]]:
         edges_pool = []
@@ -151,24 +151,41 @@ class PrimsAlgorithm:
                     if row[0] > 0 and not visited[row[0] - 1][col[0]]:
                         # all rows except top one have top neighbours
                         top_node = (row[0] - 1, col[0])
-                        edges_pool.append(node, top_node)
+                        edges_pool.append((node, top_node))
 
                     if col[0] > 0 and not visited[row[0]][col[0] - 1]:
                         # all columns except first have left neighbours
                         left_node = (row[0], col[0] - 1)
-                        edges_pool.append(node, left_node)
+                        edges_pool.append((node, left_node))
 
                     if row[0] < len(visited) - 1 and not visited[row[0] + 1][col[0]]:
                         # all rows except last one have bot neighbours
                         bot_node = (row[0] + 1, col[0])
-                        edges_pool.append(node, bot_node)
+                        edges_pool.append((node, bot_node))
 
-                    if col[0] < len(visited) - 1 and not visited[row[0]][col[0] + 1]:
+                    if col[0] < len(visited[0]) - 1 and not visited[row[0]][col[0] + 1]:
                         # all columns except last have right neighbours
-                        right_node = (row[0], col[0] - 1)
-                        edges_pool.append(node, right_node)
+                        right_node = (row[0], col[0] + 1)
+                        edges_pool.append((node, right_node))
 
         return edges_pool
+
+    def open_walls(self, cells: List[List[int]], node: tuple, next_node: tuple):
+        y, x = node
+        n_y, n_x = next_node
+        if y - 1 == n_y:
+            cells[y][x] = cells[y][x] ^ self.NORTH
+            cells[n_y][n_x] = cells[n_y][n_x] ^ self.SOUTH
+        if x + 1 == n_x:
+            cells[y][x] = cells[y][x] ^ self.EAST
+            cells[n_y][n_x] = cells[n_y][n_x] ^ self.WEST
+        if y + 1 == n_y:
+            cells[y][x] = cells[y][x] ^ self.SOUTH
+            cells[n_y][n_x] = cells[n_y][n_x] ^ self.NORTH
+        if x - 1 == n_x:
+            cells[y][x] = cells[y][x] ^ self.WEST
+            cells[n_y][n_x] = cells[n_y][n_x] ^ self.EAST
+        return cells
 
 
 
