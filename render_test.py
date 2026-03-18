@@ -1,18 +1,20 @@
 # import sys
 # import os
 import time
+from typing import Optional
 # from config import Config
 # from mazegen import MazeGenerator, Maze
 # from serializer import write_output_file
 
 
 class AsciiRender:
-    def __init__(self, width: int, height: int) -> None:
+    def __init__(self, width: int, height: int,
+                 maze_entry: list[int], maze_exit: list[int]) -> None:
         self.width = width
         self.height = height
-        maze_pieces = [
-            f""
-        ]
+        self.maze_pieces = []
+        self.maze_entry = maze_entry
+        self.maze_exit = maze_exit
 
     # def _draw_maze(self,
     #                maze: Maze,
@@ -23,28 +25,93 @@ class AsciiRender:
     #                current: tuple[int, int] | None = None) -> None:
     #     self.current = current
 
-    def calc_piece(self, curr_cell, path) -> str:
+    def draw_maze(self,
+                  grid: list[list[int]],
+                  path: Optional[list[int]]) -> None:
+        x = 0
+        y = 0
+        for row in grid:
+            r = []
+            for col in row:
+                r.append(self.calc_piece(grid[y][x],
+                                         path[y][x]))
+                x += 1
+            self.maze_pieces.append(r)
+            x = 0
+            y += 1
+
+    def calc_piece(self, curr_cell: int,
+                   path: Optional[int] = None,
+                   is_42: Optional[int] = None) -> set[str]:
         cell_base = [0, 0, 0, 0]
-        default_piece1 = "    "
-        default_piece2 = "   ┼"
-        if curr_cell == 4:
-            default_piece2 = "───┼"
-        elif curr_cell == 8:
-            curr_cell
+        i = [0, 8]
+        for n in cell_base:
+            if curr_cell > 0 and i[1] <= curr_cell:
+                curr_cell -= i[1]
+                n += 1
+                i[1] = i[1] / 2
+            else:
+                i[1] = i[1] / 2
+            cell_base[i[0]] = n
+            i[0] += 1
+        connect = [[" │", " │", " │"],
+                   ["─────"],
+                   ["│ ", "│ ", "│ "],
+                   ["─────"]]
+        if cell_base[0] == 0:
+            connect[0] = ["─┘", "  ", "─┐"]
+        if cell_base[1] == 0:
+            connect[1] = ["┐   ┌"]
+        if cell_base[2] == 0:
+            connect[2] = ["└─", "  ", "┌─"]
+        if cell_base[3] == 0:
+            connect[3] = ["┘   └"]
+        center = " "
+        if isinstance(path, int):
+            if path == 1:
+                center = "￭"
+            elif path == 2 or path == 3:
+                center = "🮮"
 
-    def animator(self) -> None:
-        curr_x, curr_y = self.current
-        time.sleep(0.3)
+        cell_top1 = (" ┌" + connect[3][0] + "┐ ")
+        cell_top2 = (connect[0][0] + "     " + connect[2][0])
+        cell_mid1 = (connect[0][1] + "  " + center + "  " + connect[2][1])
+        cell_bot2 = (connect[0][2] + "     " + connect[2][2])
+        cell_bot1 = (" └" + connect[1][0] + "┘ ")
 
-    def builder(self) -> None:
-        print("┌" + ("───┬" * (self.width - 1)) + "───┐")
-        for i in range(1, self.height):
-            print("│   ", end="")
-            for _ in range(1, self.width):
-                print(("│ ▪ │" * (self.width - 1)) + " ▪ ")
-            print("├" + ("───┼" * (self.width - 1)) + "───┤")
-        print("│" + (" ▪ │" * (self.width - 1)) + " ▪ │")
-        print("└" + ("───┴" * (self.width - 1)) + "───┘")
+        return [cell_top1, cell_top2, cell_mid1, cell_bot2, cell_bot1]
+
+    def color_picker(self, code: int, alt_color: bool) -> str:
+        color = "\x1b[0m"
+        color_42 = "\x1b[31m"
+        maze_entry = "\x1b[92m"
+        maze_exit = "\x1b[93m"
+        if alt_color is True:
+            color = "\x1b[35m"
+            color_42 = "\x1b[36m"
+        if code == 1:
+            color = color_42
+        elif code == 2:
+            color = maze_entry
+        elif code == 3:
+            color = maze_exit
+        return color
+
+    def builder(self, colors: list[int], alt_color: bool = False) -> None:
+        x = 0
+        y = 0
+        z = 0
+        print("┌" + ("─────────" * (self.width)) + "┐")
+        for y in range(0, self.height):
+            for z in range(0, len(self.maze_pieces[y][x])):
+                print("│", end="")
+                for x in range(0, self.width):
+                    color = self.color_picker(colors[y][x], alt_color)
+                    print(color + self.maze_pieces[y][x][z], end="")
+                print("│")
+                x = 0
+            z = 0
+        print("└" + ("─────────" * (self.width)) + "┘")
 
 
 # if __name__ == "__main__":
@@ -68,4 +135,3 @@ class AsciiRender:
 # 13 = NSW closed
 # 14 = ESW closed
 # 15 = NESW closed
-
