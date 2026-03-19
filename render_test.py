@@ -1,6 +1,6 @@
 # import sys
 # import os
-import time
+# import time
 from typing import Optional
 # from config import Config
 # from mazegen import MazeGenerator, Maze
@@ -12,7 +12,6 @@ class AsciiRender:
                  maze_entry: list[int], maze_exit: list[int]) -> None:
         self.width = width
         self.height = height
-        self.maze_pieces = []
         self.maze_entry = maze_entry
         self.maze_exit = maze_exit
 
@@ -27,14 +26,24 @@ class AsciiRender:
 
     def draw_maze(self,
                   grid: list[list[int]],
-                  path: Optional[list[int]]) -> None:
+                  path: Optional[list[int]] = None) -> None:
+        self.maze_pieces = []
+        self.maze_color = []
         x = 0
         y = 0
+        if path is None:
+            path = []
+            for i in range(self.height):
+                path.append([])
+                for j in range(self.width):
+                    path[i].append(0)
         for row in grid:
             r = []
             for col in row:
                 r.append(self.calc_piece(grid[y][x],
-                                         path[y][x]))
+                                         path[y][x],
+                                         x,
+                                         y))
                 x += 1
             self.maze_pieces.append(r)
             x = 0
@@ -42,7 +51,9 @@ class AsciiRender:
 
     def calc_piece(self, curr_cell: int,
                    path: Optional[int] = None,
-                   is_42: Optional[int] = None) -> set[str]:
+                   x: int = 0, y: int = 0) -> set[str]:
+        if curr_cell == 42:
+            return
         cell_base = [0, 0, 0, 0]
         i = [0, 8]
         for n in cell_base:
@@ -70,8 +81,10 @@ class AsciiRender:
         if isinstance(path, int):
             if path == 1:
                 center = "￭"
-            elif path == 2 or path == 3:
+            elif [y, x] == self.maze_entry:
                 center = "🮮"
+            elif [y, x] == self.maze_exit:
+                center = "╳"
 
         cell_top1 = (" ┌" + connect[3][0] + "┐ ")
         cell_top2 = (connect[0][0] + "     " + connect[2][0])
@@ -81,14 +94,18 @@ class AsciiRender:
 
         return [cell_top1, cell_top2, cell_mid1, cell_bot2, cell_bot1]
 
+    # def set_colors(self) -> None:
+    #     self.grid[y][x]
+    #     self.maze
+
     def color_picker(self, code: int, alt_color: bool) -> str:
         color = "\x1b[0m"
-        color_42 = "\x1b[31m"
+        color_42 = "\x1b[95m"
         maze_entry = "\x1b[92m"
         maze_exit = "\x1b[93m"
         if alt_color is True:
-            color = "\x1b[35m"
-            color_42 = "\x1b[36m"
+            color = "\x1b[36m"
+            color_42 = "\x1b[31m"
         if code == 1:
             color = color_42
         elif code == 2:
@@ -101,18 +118,28 @@ class AsciiRender:
         x = 0
         y = 0
         z = 0
-        print("┌" + ("─────────" * (self.width)) + "┐")
+        if alt_color is True:
+            frame_color = "\x1b[31m"
+        else:
+            frame_color = "\x1b[95m"
+        print(frame_color + "┌" + ("─────────" * (self.width)) + "┐")
         for y in range(0, self.height):
             for z in range(0, len(self.maze_pieces[y][x])):
-                print("│", end="")
+                print(frame_color + "│", end="")
                 for x in range(0, self.width):
                     color = self.color_picker(colors[y][x], alt_color)
                     print(color + self.maze_pieces[y][x][z], end="")
-                print("│")
+                print(frame_color + "│")
                 x = 0
             z = 0
-        print("└" + ("─────────" * (self.width)) + "┘")
+        print(frame_color + "└" + ("─────────" * (self.width)) + "┘")
 
+
+# class Animator:
+#     def __init__(self, to_animate: AsciiRender) -> None:
+#         self.to_animate = to_animate
+
+#     def anim_gen(self, grid) -> Generator:
 
 # if __name__ == "__main__":
     # os.system('clear')
