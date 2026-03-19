@@ -2,7 +2,7 @@
 # import time
 import os
 # from config import load_config
-# from mazegen import MazeGenerator
+# from maze_generator import MazeGenerator, MazeGrid
 from render_test import AsciiRender
 
 
