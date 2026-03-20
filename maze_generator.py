@@ -1,4 +1,5 @@
-from typing import List, Optional, Generator, Tuple, Set
+from typing import List, Generator, Tuple, Set
+# from typing import Optional
 import random
 
 
@@ -119,7 +120,8 @@ class PrimsAlgorithm:
         self.seed = seed
         self.random = random.Random(seed)
 
-    def generate_mst(self, maze_grid: MazeGrid) -> Generator[List[List[int]], None, None]:
+    def generate_mst(self, maze_grid: MazeGrid) -> Generator[List[List[int]],
+                                                             None, None]:
         # Minimum Spanning Tree is a list of (y, x, wall_vallue) tuples
         mst = maze_grid.cells
         total_nodes = (maze_grid.width ** 2)
@@ -139,7 +141,8 @@ class PrimsAlgorithm:
         if self.perfect:
             return mst
 
-    def get_available_edges(self, visited, maze_grid) -> List[Tuple[tuple, tuple]]:
+    def get_available_edges(self, visited, maze_grid) -> List[Tuple[tuple,
+                                                                    tuple]]:
         edges_pool = []
 
         for node in visited:
@@ -152,33 +155,42 @@ class PrimsAlgorithm:
                     # all rows except top one have top neighbours
                     top_node = node - maze_grid.width
                     if top_node not in visited:
-                        if (top_node // maze_grid.width, top_node % maze_grid.width) not in maze_grid.pat_coords:
+                        if ((top_node // maze_grid.width,
+                                top_node % maze_grid.width)
+                                not in maze_grid.pat_coords):
                             edges_pool.append((node, top_node))
 
                 if col > 0:
                     # all columns except first have left neighbours
                     left_node = node - 1
                     if left_node not in visited:
-                        if (left_node // maze_grid.width, left_node % maze_grid.width) not in maze_grid.pat_coords:
+                        if ((left_node // maze_grid.width,
+                                left_node % maze_grid.width)
+                                not in maze_grid.pat_coords):
                             edges_pool.append((node, left_node))
 
                 if row < maze_grid.width - 1:
                     # all rows except last one have bot neighbours
                     bot_node = node + maze_grid.width
                     if bot_node not in visited:
-                        if (bot_node // maze_grid.width, bot_node % maze_grid.width) not in maze_grid.pat_coords:
+                        if ((bot_node // maze_grid.width,
+                                bot_node % maze_grid.width)
+                                not in maze_grid.pat_coords):
                             edges_pool.append((node, bot_node))
 
                 if col < maze_grid.width - 1:
                     # all columns except last have right neighbours
                     right_node = node + 1
                     if right_node not in visited:
-                        if (right_node // maze_grid.width, right_node % maze_grid.width) not in maze_grid.pat_coords:
+                        if ((right_node // maze_grid.width,
+                                right_node % maze_grid.width)
+                                not in maze_grid.pat_coords):
                             edges_pool.append((node, right_node))
 
         return edges_pool
 
-    def open_walls(self, mst: List[List[int]], node: int, next_node: int, maze_grid):
+    def open_walls(self, mst: List[List[int]],
+                   node: int, next_node: int, maze_grid):
         y = node // maze_grid.width
         x = node % maze_grid.width
         n_y = next_node // maze_grid.width
@@ -241,7 +253,8 @@ def main():
 
     maze_generator = maze_gen.generator_method
     # Generator passo a passo do algoritmo
-    # Um tuple por passo (y, x, valor paredes) para aplicar directamente na grid?
+    # Um tuple por passo (y, x, valor paredes)
+    # para aplicar directamente na grid?
     # Lista completa no fim
 
     for _ in maze_generator:

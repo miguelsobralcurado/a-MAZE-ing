@@ -1,9 +1,10 @@
 # import sys
-# import time
+import time
 import os
+import random
 # from config import load_config
-# from maze_generator import MazeGenerator, MazeGrid
-from render_test import AsciiRender
+from maze_generator import MazeGenerator
+from render_test import AsciiRender, Animator
 
 
 # def main(argv: list[str]) -> int:
@@ -28,46 +29,60 @@ class Error(Exception):
         super().__init__(*args)
 
 
+# def parse_config():
+#     try:
+#         with open("config.txt", "r") as config:
+#             if
+
+
 if __name__ == "__main__":
+
     command = ""
     color = False
     show_path = False
-    lines_to_clear = 8
     gen_maze = None
     gen_path = None
     comm_error = ""
     anim_speed = ""
     anim_error = False
     animator = False
-    speed_types = ["slow", "normal", "fast"]
-    test_grid = [[9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
-                 [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-                 [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-                 [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-                 [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-                 [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-                 [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-                 [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-                 [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-                 [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-                 [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-                 [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-                 [12, 4, 4, 4, 4, 4, 4, 4, 4, 4, 6]]
-    grid = [[9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
-            [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-            [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-            [8, 0, 4, 0, 4, 0, 4, 4, 4, 0, 2],
-            [8, 2, 15, 10, 15, 10, 15, 15, 15, 8, 2],
-            [8, 2, 15, 14, 15, 8, 5, 7, 15, 8, 2],
-            [8, 2, 15, 15, 15, 10, 15, 15, 15, 8, 2],
-            [8, 0, 1, 3, 15, 10, 15, 13, 5, 0, 2],
-            [8, 0, 0, 2, 15, 10, 15, 15, 15, 8, 2],
-            [8, 0, 0, 0, 1, 0, 1, 1, 1, 0, 2],
-            [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-            [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-            [12, 4, 4, 4, 4, 4, 4, 4, 4, 4, 6]]
+    seed = True
+    seed_val = 238576
+    maze_gen = MazeGenerator(11, 11, (0, 0), (10, 10), 238576)
+    maze_grid = maze_gen.initialize()
+    gen_grid = maze_grid.cells
+    logo = maze_gen.logo
+    maze = AsciiRender(maze_gen.width, maze_gen.height,
+                       maze_gen.entry, maze_gen.exit)
+    speed_types = {"slow": 0.3, "normal": 0.1, "fast": 0.03}
+    test_grid = [[3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9],
+                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                 [6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 12]]
+    grid = [[3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9],
+            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+            [2, 0, 4, 0, 4, 0, 4, 4, 4, 0, 8],
+            [2, 8, 15, 10, 15, 10, 15, 15, 15, 2, 8],
+            [2, 8, 15, 14, 15, 2, 5, 13, 15, 2, 8],
+            [2, 8, 15, 15, 15, 10, 15, 15, 15, 2, 8],
+            [2, 0, 1, 9, 15, 10, 15, 7, 5, 0, 8],
+            [2, 0, 0, 8, 15, 10, 15, 15, 15, 2, 8],
+            [2, 0, 0, 0, 1, 0, 1, 1, 1, 0, 8],
+            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+            [6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 12]]
     path = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0],
@@ -76,7 +91,7 @@ if __name__ == "__main__":
             [0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
     is_42 = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -101,9 +116,32 @@ if __name__ == "__main__":
                 raise Error
             elif command == "t" or command == "test":
                 gen_maze = grid
-                maze = AsciiRender(11, 13, [10, 2], [1, 9])
+                color_grid = is_42
+                path_grid = path
+                maze = AsciiRender(11, 13, (10, 2), (1, 9))
             elif command == "g" or command == "generate":
-                comm_error = "Sorry, this command is still unavailable..."
+                if seed is True:
+                    maze_gen = MazeGenerator(11, 11, (0, 0), (10, 10),
+                                             random.seed())
+                else:
+                    maze_gen = MazeGenerator(11, 11,
+                                             (0, 0), (10, 10), seed_val)
+                maze_generated = maze_gen.generator_method
+                maze = AsciiRender(maze_gen.width, maze_gen.height,
+                                   maze_gen.entry, maze_gen.exit)
+                animate = Animator(maze)
+                color_grid = maze.set_colors(logo)
+                path_grid = None
+                for _ in maze_generated:
+                    gen_maze = next(maze_generated)
+                    if animator is True:
+                        animate.print_frame(gen_maze,
+                                            path_grid,
+                                            color_grid,
+                                            color)
+                        time.sleep(speed_types[anim_speed])
+                    os.system('clear')
+
             elif command == "p" or command == "path":
                 if show_path is False:
                     show_path = True
@@ -115,16 +153,24 @@ if __name__ == "__main__":
                 else:
                     color = False
             elif command == "a" or command == "animate":
-                animator = True
+                if animator is False:
+                    animator = True
+                else:
+                    animator = False
+            elif command == "s" or command == "seed":
+                if seed is False:
+                    seed = True
+                else:
+                    seed = False
             elif command:
                 comm_error = "Error - Invalid command"
             if gen_maze is not None:
                 if show_path is False:
                     maze.draw_maze(gen_maze, None)
-                    maze.builder(is_42, color)
+                    maze.builder(color_grid, color)
                 else:
-                    maze.draw_maze(gen_maze, path)
-                    maze.builder(is_42, color)
+                    maze.draw_maze(gen_maze, path_grid)
+                    maze.builder(color_grid, color)
             print()
             if comm_error != "":
                 print("\x1b[0m" + comm_error)
@@ -135,8 +181,12 @@ if __name__ == "__main__":
             print(" 'c' or 'color' - Changes to the alt maze color")
             print(" 't' or 'test' - Generates an unsolvable test maze")
             print(" 'a' or 'animate' - Animates the next generation")
+            print(" 's' or 'seed' - Toggles generation using the seed "
+                  "in config.txt")
             print(" 'q' or 'quit' - Quits the program")
             print()
+            if seed is True:
+                print("# The maze will generate from the config seed")
             if show_path is True:
                 print("# Animator will show the pathing process...")
             if anim_speed != "":
@@ -144,7 +194,7 @@ if __name__ == "__main__":
             command = str.casefold(input("Choose a command: "))
             if command == "a" or command == "animate":
                 if anim_speed == "":
-                    while anim_speed not in speed_types:
+                    while anim_speed not in speed_types.keys():
                         print()
                         print("Please select the speed of the animation:")
                         print(" 1 - Slow speed")
@@ -175,7 +225,7 @@ if __name__ == "__main__":
             os.system('clear')
     except (KeyboardInterrupt, Error) as e:
         if type(e) is KeyboardInterrupt:
-            print("\n\nForcibly exiting program...\n")
+            print("\x1b[0m" + "\n\nForcibly exiting program...\n")
 
 
 # print("\033[F\033[2K" * n, end="", flush=True) (clears n amount of lines)
