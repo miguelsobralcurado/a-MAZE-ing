@@ -13,6 +13,13 @@ graph = {
   'I' : []
 }
 
+maze_grid = [
+    [3, 13, 11, 11],
+    [10, 3, 4, 8],
+    [2, 4, 9, 10],
+    [6, 13, 14, 14]
+]
+
 
 def bfs(graph, node):
     # The video has visited as an array. I changed this to set because 'n not in visited' below is O(1) instead of O(n).
