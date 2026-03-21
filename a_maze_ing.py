@@ -1,8 +1,9 @@
-# import sys
+import sys
 import time
 import os
 import random
 # from config import load_config
+from typing import Dict, Any, Tuple
 from maze_generator import MazeGenerator
 from render_test import AsciiRender, Animator
 
@@ -29,14 +30,118 @@ class Error(Exception):
         super().__init__(*args)
 
 
-# def parse_config():
-#     try:
-#         with open("config.txt", "r") as config:
-#             if
+def validate_keys(config: Dict[str, str]) -> None:
+    try:
+        required = ["WIDTH", "HEIGHT",
+                    "ENTRY", "EXIT",
+                    "OUTPUT_FILE", "PERFECT"]
+        for k in required:
+            if k not in config:
+                raise ValueError
+    except ValueError:
+        print(f"Error: Config file is missing required input: {k}",
+              file=sys.stderr)
+        sys.exit(1)
+
+
+def validate_values(config: Dict[str, str]) -> None:
+    try:
+        width = int(config["WIDTH"])
+        height = int(config["HEIGHT"])
+        if config["ENTRY"] == config["EXIT"]:
+            raise ValueError("Error: Entry and Exit cannot be in "
+                             "the same position")
+        x1, y1 = format_coords(config["ENTRY"])
+        x2, y2 = format_coords(config["EXIT"])
+        rows = [x1, x2]
+        columns = [y1, y2]
+        for r in rows:
+            if r < 0 or r >= width:
+                raise ValueError(f"Error: {r} not within maze bounds")
+        for c in columns:
+            if c < 0 or c >= height:
+                raise ValueError(f"Error: {c} not within maze bounds")
+    except ValueError as e:
+        print(e)
+        sys.exit(1)
+
+
+def parse_config(filepath: str) -> Dict[str, Any]:
+    parsed = {}
+    try:
+        with open(filepath, "r") as config:
+            for line_num, line in enumerate(config, 1):
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if "=" not in line:
+                    raise ValueError
+                k, v = line.split("=", 1)
+                parsed[k.strip().upper()] = v.strip()
+        validate_keys(parsed)
+        validate_values(parsed)
+        return parsed
+    except (ValueError, FileNotFoundError, Exception) as e:
+        if type(e) is ValueError:
+            print("Error: Invalid syntax on line "
+                  f"{line_num}: '{line}'.", file=sys.stderr)
+            sys.exit(1)
+        elif type(e) is FileNotFoundError:
+            print(f"Error: Configuration file '{filepath}' not found.",
+                  file=sys.stderr)
+            sys.exit(1)
+        elif type(e) is Exception:
+            print(f"Error: An unexpected error has occurred: {e}",
+                  file=sys.stderr)
+            sys.exit(1)
+
+
+def format_coords(to_format: str) -> Tuple[int, int]:
+    try:
+        x, y = map(int, to_format.split(","))
+        return (x, y)
+    except ValueError:
+        print(f"Error: Invalid coordinate format '{to_format}'. "
+              "Expected format: 'x,y'")
+        sys.exit(1)
+
+
+def format_maze(maze_grid: list[list[int]]) -> list[list[str]]:
+    f_maze = maze_grid
+    for row in f_maze:
+        for cell in row:
+            cell = hex(cell)
+    print(f_maze)
+    return f_maze
+
+
+def create_output(maze_grid: list[list[int]],
+                  output_fname: str,
+                  maze: AsciiRender,
+                  path_str: str = "") -> None:
+    # f_maze = format_maze(maze_grid)
+    try:
+        with open(output_fname, "w") as file:
+            for row in maze_grid:
+                file.write("".join(f"{hex(cell)[2:].upper()}" for cell in row)
+                           + "\n")
+            file.write("\n")
+            file.write(f"{maze.maze_entry[0]},{maze.maze_entry[1]}\n")
+            file.write(f"{maze.maze_exit[0]},{maze.maze_exit[1]}\n")
+            file.write(path_str + "\n")
+    except IOError as e:
+        print(f"Error: Unexpected error writing to file {e}")
 
 
 if __name__ == "__main__":
-
+    config = parse_config("config.txt")
+    width = int(config["WIDTH"])
+    height = int(config["HEIGHT"])
+    output_file = config["OUTPUT_FILE"]
+    perfect = config["PERFECT"]
+    entry = format_coords(config["ENTRY"])
+    exit = format_coords(config["EXIT"])
+    seed_val = config["SEED"] if "SEED" in config else None
     command = ""
     color = False
     show_path = False
@@ -47,8 +152,7 @@ if __name__ == "__main__":
     anim_error = False
     animator = False
     seed = True
-    seed_val = 238576
-    maze_gen = MazeGenerator(11, 11, (0, 0), (10, 10), 238576)
+    maze_gen = MazeGenerator(width, height, entry, exit, seed_val)
     maze_grid = maze_gen.initialize()
     gen_grid = maze_grid.cells
     logo = maze_gen.logo
@@ -121,11 +225,11 @@ if __name__ == "__main__":
                 maze = AsciiRender(11, 13, (10, 2), (1, 9))
             elif command == "g" or command == "generate":
                 if seed is True:
-                    maze_gen = MazeGenerator(11, 11, (0, 0), (10, 10),
+                    maze_gen = MazeGenerator(width, height, entry, exit,
                                              random.seed())
                 else:
-                    maze_gen = MazeGenerator(11, 11,
-                                             (0, 0), (10, 10), seed_val)
+                    maze_gen = MazeGenerator(width, height,
+                                             entry, exit, seed_val)
                 maze_generated = maze_gen.generator_method
                 maze = AsciiRender(maze_gen.width, maze_gen.height,
                                    maze_gen.entry, maze_gen.exit)
@@ -141,7 +245,7 @@ if __name__ == "__main__":
                                             color)
                         time.sleep(speed_types[anim_speed])
                     os.system('clear')
-
+                create_output(gen_maze, output_file, maze)
             elif command == "p" or command == "path":
                 if show_path is False:
                     show_path = True
@@ -185,7 +289,7 @@ if __name__ == "__main__":
                   "in config.txt")
             print(" 'q' or 'quit' - Quits the program")
             print()
-            if seed is True:
+            if seed is False:
                 print("# The maze will generate from the config seed")
             if show_path is True:
                 print("# Animator will show the pathing process...")

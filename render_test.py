@@ -64,16 +64,16 @@ class AsciiRender:
                 i[1] = i[1] / 2
             cell_base[i[0]] = n
             i[0] += 1
-        connect = [["│ ", "│ ", "│ "],
+        connect = [[" │", " │", " │"],
                    ["─────"],
-                   [" │", " │", " │"],
+                   ["│ ", "│ ", "│ "],
                    ["─────"]]
         if cell_base[0] == 0:
-            connect[0] = ["└─", "  ", "┌─"]
+            connect[0] = ["─┘", "  ", "─┐"]
         if cell_base[1] == 0:
             connect[1] = ["┐   ┌"]
         if cell_base[2] == 0:
-            connect[2] = ["─┘", "  ", "─┐"]
+            connect[2] = ["└─", "  ", "┌─"]
         if cell_base[3] == 0:
             connect[3] = ["┘   └"]
         center = " "
@@ -86,9 +86,9 @@ class AsciiRender:
                 center = "╳"
 
         cell_top1 = (" ┌" + connect[3][0] + "┐ ")
-        cell_top2 = (connect[2][0] + "     " + connect[0][0])
-        cell_mid1 = (connect[2][1] + "  " + center + "  " + connect[0][1])
-        cell_bot2 = (connect[2][2] + "     " + connect[0][2])
+        cell_top2 = (connect[0][0] + "     " + connect[2][0])
+        cell_mid1 = (connect[0][1] + "  " + center + "  " + connect[2][1])
+        cell_bot2 = (connect[0][2] + "     " + connect[2][2])
         cell_bot1 = (" └" + connect[1][0] + "┘ ")
 
         return [cell_top1, cell_top2, cell_mid1, cell_bot2, cell_bot1]
