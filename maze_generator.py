@@ -37,7 +37,7 @@ class PrimsAlgorithm:
         self.seed = seed
         self.random = random.Random(seed)
 
-    def generate_mst(self, maze_grid: MazeGrid) -> Generator[List[List[int]],
+    def generate_mst(self, maze_grid: MazeGrid) -> Generator[List[list[int]],
                                                              None, None]:
         # Minimum Spanning Tree is a list of (y, x, wall_vallue) tuples
         mst = maze_grid.cells
@@ -56,10 +56,18 @@ class PrimsAlgorithm:
             visited.append(next_node)
             unvisited.remove(next_node)
             yield mst
-        if self.perfect:
-            return mst
+        if not self.perfect:
+            extras = round(total_nodes * 0.10)
+            while extras:
+                walls: tuple[int, int] = self.demolish_extra(maze_grid,
+                                                             total_nodes)
+                wall_1, wall_2 = walls
+                mst = self.open_walls(mst, wall_1, wall_2, maze_grid)
+                extras -= 1
+                yield mst
+        return mst
 
-    def get_available_edges(self, visited, maze_grid) -> List[Tuple[tuple,
+    def get_available_edges(self, visited, maze_grid) -> List[tuple[tuple,
                                                                     tuple]]:
         edges_pool = []
         for node in visited:
@@ -119,7 +127,7 @@ class PrimsAlgorithm:
 
         return edges_pool
 
-    def open_walls(self, mst: List[List[int]],
+    def open_walls(self, mst: List[list[int]],
                    node: int, next_node: int, maze_grid):
         y = node // maze_grid.width
         x = node % maze_grid.width
@@ -138,6 +146,20 @@ class PrimsAlgorithm:
             mst[y][x] ^= self.EAST
             mst[n_y][n_x] ^= self.WEST
         return mst
+
+    def demolish_extra(self, maze_grid, total_nodes) -> tuple[int, int]:
+        wall_2 = -1
+        while wall_2 == -1:
+            rand = self.random.randint(0, total_nodes - 1)
+            y = rand // maze_grid.width
+            x = rand % maze_grid.width
+            if maze_grid.pat_coords:
+                if (y, x) in maze_grid.pat_coords:
+                    continue
+            edges = self.get_available_edges([rand], maze_grid)
+            edge = self.random.choice(edges)
+            wall_1, wall_2 = edge
+        return (wall_1, wall_2)
 
 
 class MazeGenerator:
@@ -280,7 +302,7 @@ class MazeGenerator:
 def main():
     entry = (0, 0)
     exit = (3, 3)
-    maze_gen = MazeGenerator(4, 4, entry, exit, 0)
+    maze_gen = MazeGenerator(4, 4, entry, exit, 0, False)
 
 #    ascii_rend = AsciiRenderer(bla bla)
 
@@ -323,13 +345,16 @@ def main():
     # Um tuple por passo (y, x, valor paredes) para aplicar directamente na grid?
     # Lista completa no fim
     next_grid = []
+    i = 0
     for step in maze_generator:
         next_grid = step
         print(next_grid)
         print()
+        i += 1
 #    for row in next_grid:
 #        print(row)
 #        print()
+    print(i)
     output = maze_gen.bfs(next_grid, entry, exit)
     print(output[1])
     print()
