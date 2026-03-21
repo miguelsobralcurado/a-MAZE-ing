@@ -51,8 +51,8 @@ def validate_values(config: Dict[str, str]) -> None:
         if config["ENTRY"] == config["EXIT"]:
             raise ValueError("Error: Entry and Exit cannot be in "
                              "the same position")
-        x1, y1 = format_coords(config["ENTRY"])
-        x2, y2 = format_coords(config["EXIT"])
+        y1, x1 = format_coords(config["ENTRY"])
+        y2, x2 = format_coords(config["EXIT"])
         rows = [x1, x2]
         columns = [y1, y2]
         for r in rows:
@@ -99,7 +99,7 @@ def parse_config(filepath: str) -> Dict[str, Any]:
 def format_coords(to_format: str) -> Tuple[int, int]:
     try:
         x, y = map(int, to_format.split(","))
-        return (x, y)
+        return (y, x)
     except ValueError:
         print(f"Error: Invalid coordinate format '{to_format}'. "
               "Expected format: 'x,y'")
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     gen_maze = None
     gen_path = None
     comm_error = ""
-    anim_speed = ""
+    anim_speed = "off"
     anim_error = False
     animator = False
     seed = True
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     logo = maze_gen.logo
     maze = AsciiRender(maze_gen.width, maze_gen.height,
                        maze_gen.entry, maze_gen.exit)
-    speed_types = {"slow": 0.3, "normal": 0.1, "fast": 0.03}
+    speed_types = {"off": "", "slow": 0.3, "normal": 0.1, "fast": 0.03}
     test_grid = [[3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9],
                  [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
                  [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
@@ -236,8 +236,8 @@ if __name__ == "__main__":
                 animate = Animator(maze)
                 color_grid = maze.set_colors(logo)
                 path_grid = None
-                for _ in maze_generated:
-                    gen_maze = next(maze_generated)
+                for next in maze_generated:
+                    gen_maze = next
                     if animator is True:
                         animate.print_frame(gen_maze,
                                             path_grid,
@@ -245,7 +245,10 @@ if __name__ == "__main__":
                                             color)
                         time.sleep(speed_types[anim_speed])
                     os.system('clear')
-                create_output(gen_maze, output_file, maze)
+                path_output = maze_gen.bfs(gen_maze,
+                                           maze_gen.entry,
+                                           maze_gen.exit)
+                create_output(gen_maze, output_file, maze, path_output[1])
             elif command == "p" or command == "path":
                 if show_path is False:
                     show_path = True
@@ -273,7 +276,7 @@ if __name__ == "__main__":
                     maze.draw_maze(gen_maze, None)
                     maze.builder(color_grid, color)
                 else:
-                    maze.draw_maze(gen_maze, path_grid)
+                    maze.draw_maze(gen_maze, path_output)
                     maze.builder(color_grid, color)
             print()
             if comm_error != "":
@@ -293,36 +296,40 @@ if __name__ == "__main__":
                 print("# The maze will generate from the config seed")
             if show_path is True:
                 print("# Animator will show the pathing process...")
-            if anim_speed != "":
+            if anim_speed != "off":
                 print(f"# Animator speed is set to {anim_speed}")
             command = str.casefold(input("Choose a command: "))
             if command == "a" or command == "animate":
-                if anim_speed == "":
-                    while anim_speed not in speed_types.keys():
-                        print()
-                        print("Please select the speed of the animation:")
-                        print(" 1 - Slow speed")
-                        print(" 2 - Normal speed")
-                        print(" 3 - Fast speed")
-                        print()
-                        anim_speed = str.casefold(input("Animation speed = "))
-                        if anim_speed == "1":
-                            anim_speed = "slow"
-                        elif anim_speed == "2":
-                            anim_speed = "normal"
-                        elif anim_speed == "3":
-                            anim_speed = "fast"
+                while anim_speed in speed_types.keys():
+                    print()
+                    print("Please select the speed of the animation:")
+                    print(" 0 - Stop animator")
+                    print(" 1 - Slow speed")
+                    print(" 2 - Normal speed")
+                    print(" 3 - Fast speed")
+                    print()
+                    anim_speed = str.casefold(input("Animation speed = "))
+                    if anim_speed == "1":
+                        anim_speed = "slow"
+                        break
+                    elif anim_speed == "2":
+                        anim_speed = "normal"
+                        break
+                    elif anim_speed == "3":
+                        anim_speed = "fast"
+                        break
+                    elif anim_speed == "0":
+                        anim_speed = "off"
+                        break
+                    else:
+                        if anim_error is False:
+                            print("\033[F\033[2K" * 8, end="", flush=True)
+                            anim_error = True
                         else:
-                            if anim_error is False:
-                                print("\033[F\033[2K" * 7, end="", flush=True)
-                                anim_error = True
-                            else:
-                                print("\033[F\033[2K" * 9, end="", flush=True)
-                            print()
-                            print("Error - Invalid command")
-                            anim_speed = ""
-                else:
-                    anim_speed = ""
+                            print("\033[F\033[2K" * 10, end="", flush=True)
+                        print()
+                        print("Error - Invalid command")
+                        anim_speed = "off"
                 anim_error = False
             if comm_error != "":
                 comm_error = ""

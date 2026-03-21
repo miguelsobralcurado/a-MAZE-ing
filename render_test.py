@@ -1,10 +1,4 @@
-# import sys
-# import os
-# import time
-from typing import Optional
-# from config import Config
-# from mazegen import MazeGenerator, Maze
-# from serializer import write_output_file
+from typing import Optional, Any
 
 
 class AsciiRender:
@@ -19,28 +13,33 @@ class AsciiRender:
         self.width = width
         self.height = height
 
-    def blank_grid(self) -> list[list[int]]:
+    def blank_grid(self, type: str = "int") -> list[list[Any]]:
         grid = []
         for i in range(self.height):
             grid.append([])
             for j in range(self.width):
-                grid[i].append(0)
+                if type == "int":
+                    grid[i].append(0)
+                elif type == "str":
+                    grid[i].append("")
         return grid
 
     def draw_maze(self,
                   grid: list[list[int]],
-                  path: Optional[list[int]] = None) -> None:
+                  path: Optional[list[list[tuple], str]] = None) -> None:
         self.maze_pieces = []
         self.maze_color = []
         x = 0
         y = 0
         if path is None:
-            path = self.blank_grid()
+            path_grid = self.blank_grid()
+        else:
+            path_grid = self.draw_path(self.blank_grid("str"), path)
         for row in grid:
             r = []
             for col in row:
                 r.append(self.calc_piece(grid[y][x],
-                                         path[y][x],
+                                         path_grid[y][x],
                                          x,
                                          y))
                 x += 1
@@ -48,9 +47,21 @@ class AsciiRender:
             x = 0
             y += 1
 
+    def draw_path(self,
+                  empty_grid: list[list[str]],
+                  f_path: list[list[tuple], str]) -> list[list[str]]:
+        i = 0
+        for coords in f_path[0]:
+            y, x = coords
+            if i < len(f_path[1]):
+                empty_grid[y][x] = f_path[1][i]
+            i += 1
+        return empty_grid
+
     def calc_piece(self, curr_cell: int,
-                   path: Optional[int] = None,
+                   path: Optional[str] = None,
                    x: int = 0, y: int = 0) -> set[str]:
+        directions = {"N": "🮧", "E": "🮥", "S": "🮦", "W": "🮤"}
         if curr_cell == 42:
             return
         cell_base = [0, 0, 0, 0]
@@ -77,13 +88,13 @@ class AsciiRender:
         if cell_base[3] == 0:
             connect[3] = ["┘   └"]
         center = " "
-        if isinstance(path, int):
-            if path == 1:
-                center = "￭"
-            elif (y, x) == self.maze_entry:
-                center = "🮮"
-            elif (y, x) == self.maze_exit:
-                center = "╳"
+        if isinstance(path, str):
+            if path != "":
+                center = directions[path]
+        if (y, x) == self.maze_entry:
+            center = "🮮"
+        elif (y, x) == self.maze_exit:
+            center = "╳"
 
         cell_top1 = (" ┌" + connect[3][0] + "┐ ")
         cell_top2 = (connect[0][0] + "     " + connect[2][0])
@@ -95,9 +106,10 @@ class AsciiRender:
 
     def set_colors(self, logo_coords: set[tuple[int, int]]) -> list[list[int]]:
         color_grid = self.blank_grid()
-        for cell in logo_coords:
-            y, x = cell
-            color_grid[y][x] = 1
+        if logo_coords is not None:
+            for cell in logo_coords:
+                y, x = cell
+                color_grid[y][x] = 1
         y, x = self.maze_entry
         color_grid[y][x] = 2
         y, x = self.maze_exit

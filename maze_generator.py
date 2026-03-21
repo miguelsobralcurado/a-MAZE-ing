@@ -41,7 +41,7 @@ class PrimsAlgorithm:
                                                              None, None]:
         # Minimum Spanning Tree is a list of (y, x, wall_vallue) tuples
         mst = maze_grid.cells
-        total_nodes = (maze_grid.width ** 2)
+        total_nodes = (maze_grid.width * maze_grid.height)
         unvisited = [n for n in range(total_nodes)]
         current_node = unvisited[int(self.random.random())]
         visited = [current_node]
@@ -93,7 +93,7 @@ class PrimsAlgorithm:
                     else:
                         edges_pool.append((node, left_node))
 
-            if row < maze_grid.width - 1:
+            if row < maze_grid.height - 1:
                 # all rows except last one have bot neighbours
                 bot_node = node + maze_grid.width
                 if bot_node not in visited:
