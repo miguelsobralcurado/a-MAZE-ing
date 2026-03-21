@@ -1,5 +1,5 @@
-from typing import List, Generator, Tuple, Set
-# from typing import Optional
+from typing import List, Dict, Generator, Tuple, Set
+from collections import deque
 import random
 
 
@@ -8,7 +8,7 @@ class MazeGrid:
         self.cells: List[List[int]] = list()
         self.width = width
         self.height = height
-        self.pat_coords: Set[tuple[int, int]] = set()
+        self.pat_coords = None
 
     def initialize_all_closed(self) -> None:
         self.cells = [[15 for _ in range(self.width)]
@@ -24,6 +24,120 @@ class MazeGrid:
             if col == "#"
         }
         return self.pat_coords
+
+
+class PrimsAlgorithm:
+    def __init__(self, perfect, seed: int = 0):
+        # Bitmask values for walls
+        self.NORTH = 1
+        self.EAST = 2
+        self.SOUTH = 4
+        self.WEST = 8
+        self.perfect = perfect
+        self.seed = seed
+        self.random = random.Random(seed)
+
+    def generate_mst(self, maze_grid: MazeGrid) -> Generator[List[List[int]],
+                                                             None, None]:
+        # Minimum Spanning Tree is a list of (y, x, wall_vallue) tuples
+        mst = maze_grid.cells
+        total_nodes = (maze_grid.width ** 2)
+        unvisited = [n for n in range(total_nodes)]
+        current_node = unvisited[int(self.random.random())]
+        visited = [current_node]
+        unvisited.remove(current_node)
+        minimum = len(maze_grid.pat_coords) if maze_grid.pat_coords else 0
+
+        while len(unvisited) > minimum:
+            edges_pool = self.get_available_edges(visited, maze_grid)
+            edge = self.random.choice(edges_pool)
+            current_node, next_node = edge
+            mst = self.open_walls(mst, current_node, next_node, maze_grid)
+            visited.append(next_node)
+            unvisited.remove(next_node)
+            yield mst
+        if self.perfect:
+            return mst
+
+    def get_available_edges(self, visited, maze_grid) -> List[Tuple[tuple,
+                                                                    tuple]]:
+        edges_pool = []
+        for node in visited:
+
+            row = node // maze_grid.width
+            col = node % maze_grid.width
+            if maze_grid.pat_coords:
+                if (row, col) in maze_grid.pat_coords:
+                    continue
+            if row > 0:
+                # all rows except top one have top neighbours
+                top_node = node - maze_grid.width
+                if top_node not in visited:
+                    if maze_grid.pat_coords:
+                        if ((top_node // maze_grid.width,
+                                top_node % maze_grid.width)
+                                not in maze_grid.pat_coords):
+                            edges_pool.append((node, top_node))
+                    else:
+                        edges_pool.append((node, top_node))
+
+            if col > 0:
+                # all columns except first have left neighbours
+                left_node = node - 1
+                if left_node not in visited:
+                    if maze_grid.pat_coords:
+                        if ((left_node // maze_grid.width,
+                                left_node % maze_grid.width)
+                                not in maze_grid.pat_coords):
+                            edges_pool.append((node, left_node))
+                    else:
+                        edges_pool.append((node, left_node))
+
+            if row < maze_grid.width - 1:
+                # all rows except last one have bot neighbours
+                bot_node = node + maze_grid.width
+                if bot_node not in visited:
+                    if maze_grid.pat_coords:
+                        if ((bot_node // maze_grid.width,
+                                bot_node % maze_grid.width)
+                                not in maze_grid.pat_coords):
+                            edges_pool.append((node, bot_node))
+                    else:
+                        edges_pool.append((node, bot_node))
+
+            if col < maze_grid.width - 1:
+                # all columns except last have right neighbours
+                right_node = node + 1
+                if right_node not in visited:
+                    if maze_grid.pat_coords:
+                        if ((right_node // maze_grid.width,
+                                right_node % maze_grid.width)
+                                not in maze_grid.pat_coords):
+                            edges_pool.append((node, right_node))
+                    else:
+                        edges_pool.append((node, right_node))
+
+        return edges_pool
+
+    def open_walls(self, mst: List[List[int]],
+                   node: int, next_node: int, maze_grid):
+        y = node // maze_grid.width
+        x = node % maze_grid.width
+        n_y = next_node // maze_grid.width
+        n_x = next_node % maze_grid.width
+        if node - maze_grid.width == next_node:
+            mst[y][x] ^= self.NORTH
+            mst[n_y][n_x] ^= self.SOUTH
+        if node - 1 == next_node:
+            mst[y][x] ^= self.WEST
+            mst[n_y][n_x] ^= self.EAST
+        if node + maze_grid.width == next_node:
+            mst[y][x] ^= self.SOUTH
+            mst[n_y][n_x] ^= self.NORTH
+        if node + 1 == next_node:
+            mst[y][x] ^= self.EAST
+            mst[n_y][n_x] ^= self.WEST
+        return mst
 
 
 class MazeGenerator:
@@ -50,10 +164,13 @@ class MazeGenerator:
         return self.maze_grid
 
     def validate_entry_exit(self):
-        if self.entry in self.maze_grid.pat_coords:
-            raise ValueError("Entry coordinates on top of 42 logo")
-        if self.exit in self.maze_grid.pat_coords:
-            raise ValueError("Exit coordinates on top of 42 logo")
+        if self.entry == self.exit:
+            raise ValueError("Entry and exit have the same cell")
+        if self.maze_grid.pat_coords:
+            if self.entry in self.maze_grid.pat_coords:
+                raise ValueError("Entry coordinates on top of 42 logo")
+            if self.exit in self.maze_grid.pat_coords:
+                raise ValueError("Exit coordinates on top of 42 logo")
         return True
 
     def set_42(self) -> Set[tuple[int, int]]:
@@ -88,7 +205,8 @@ class MazeGenerator:
         ]  # 11x9
 
         if self.width < 10 or self.height < 10:
-            raise ValueError("No 42 pattern, maze size too small")
+            print("No 42 pattern, maze size too small")
+            return
         if self.width < 25 or self.height < 25:
             pattern = pat_small
         elif self.width < 31 or self.height < 31:
@@ -108,112 +226,61 @@ class MazeGenerator:
         generator = PrimsAlgorithm(self.perfect, self.seed)
         return generator.generate_mst(self.maze_grid)
 
+    @staticmethod
+    def bfs(cells: List[list[int]], entry: tuple[int, int],
+            exit: tuple[int, int]) -> list[list[tuple[int, int]], str]:
+        # Visited is a set for complexity.
+        # 'n not in visited' below is O(1) instead of O(n).
+        visited = set()
+        # Queue is a deque for complexity too.
+        # Popping the first element is O(1) instead of O(n).
+        queue = deque()
 
-class PrimsAlgorithm:
-    def __init__(self, perfect, seed: int = 0):
-        # Bitmask values for walls
-        self.NORTH = 1
-        self.EAST = 2
-        self.SOUTH = 4
-        self.WEST = 8
-        self.perfect = perfect
-        self.seed = seed
-        self.random = random.Random(seed)
+        prev_cell: Dict[tuple[int, int], tuple[int, int], int] = dict()
+        dir_str = "NESW"
 
-    def generate_mst(self, maze_grid: MazeGrid) -> Generator[List[List[int]],
-                                                             None, None]:
-        # Minimum Spanning Tree is a list of (y, x, wall_vallue) tuples
-        mst = maze_grid.cells
-        total_nodes = (maze_grid.width ** 2)
-        unvisited = [n for n in range(total_nodes)]
-        current_node = unvisited[int(self.random.random())]
-        visited = [current_node]
-        unvisited.remove(current_node)
+        visited.add(entry)
+        queue.append(entry)
 
-        while len(unvisited) > len(maze_grid.pat_coords):
-            edges_pool = self.get_available_edges(visited, maze_grid)
-            edge = self.random.choice(edges_pool)
-            current_node, next_node = edge
-            mst = self.open_walls(mst, current_node, next_node, maze_grid)
-            visited.append(next_node)
-            unvisited.remove(next_node)
-            yield mst
-        if self.perfect:
-            return mst
+        while queue:
+            y, x = queue.popleft()
 
-    def get_available_edges(self, visited, maze_grid) -> List[Tuple[tuple,
-                                                                    tuple]]:
-        edges_pool = []
+            if (y, x) == exit:
+                break
 
-        for node in visited:
-
-            row = node // maze_grid.width
-            col = node % maze_grid.width
-
-            if (row, col) not in maze_grid.pat_coords:
-                if row > 0:
-                    # all rows except top one have top neighbours
-                    top_node = node - maze_grid.width
-                    if top_node not in visited:
-                        if ((top_node // maze_grid.width,
-                                top_node % maze_grid.width)
-                                not in maze_grid.pat_coords):
-                            edges_pool.append((node, top_node))
-
-                if col > 0:
-                    # all columns except first have left neighbours
-                    left_node = node - 1
-                    if left_node not in visited:
-                        if ((left_node // maze_grid.width,
-                                left_node % maze_grid.width)
-                                not in maze_grid.pat_coords):
-                            edges_pool.append((node, left_node))
-
-                if row < maze_grid.width - 1:
-                    # all rows except last one have bot neighbours
-                    bot_node = node + maze_grid.width
-                    if bot_node not in visited:
-                        if ((bot_node // maze_grid.width,
-                                bot_node % maze_grid.width)
-                                not in maze_grid.pat_coords):
-                            edges_pool.append((node, bot_node))
-
-                if col < maze_grid.width - 1:
-                    # all columns except last have right neighbours
-                    right_node = node + 1
-                    if right_node not in visited:
-                        if ((right_node // maze_grid.width,
-                                right_node % maze_grid.width)
-                                not in maze_grid.pat_coords):
-                            edges_pool.append((node, right_node))
-
-        return edges_pool
-
-    def open_walls(self, mst: List[List[int]],
-                   node: int, next_node: int, maze_grid):
-        y = node // maze_grid.width
-        x = node % maze_grid.width
-        n_y = next_node // maze_grid.width
-        n_x = next_node % maze_grid.width
-        if node - maze_grid.width == next_node:
-            mst[y][x] ^= self.NORTH
-            mst[n_y][n_x] ^= self.SOUTH
-        if node - 1 == next_node:
-            mst[y][x] ^= self.EAST
-            mst[n_y][n_x] ^= self.WEST
-        if node + maze_grid.width == next_node:
-            mst[y][x] ^= self.SOUTH
-            mst[n_y][n_x] ^= self.NORTH
-        if node + 1 == next_node:
-            mst[y][x] ^= self.WEST
-            mst[n_y][n_x] ^= self.EAST
-        return mst
+            for i in range(4):
+                if cells[y][x] & (1 << i) == 0:
+                    ny = y
+                    nx = x
+                    if i == 0:
+                        ny -= 1
+                    elif i == 1:
+                        nx += 1
+                    elif i == 2:
+                        ny += 1
+                    elif i == 3:
+                        nx -= 1
+                    next = (ny, nx)
+                    if next not in visited:
+                        prev_cell[next] = ((y, x), i)
+                        visited.add(next)
+                        queue.append(next)
+        path: str = ''
+        coords: List[tuple[int, int]] = []
+        current = exit
+        coords.append(exit)
+        while current != entry:
+            (py, px), i = prev_cell[current]
+            path = dir_str[i] + path
+            coords.insert(0, (py, px))
+            current = (py, px)
+        return [coords, path]
 
 
 def main():
     entry = (0, 0)
-    exit = (19, 14)
-    maze_gen = MazeGenerator(21, 21, entry, exit, 0)
+    exit = (3, 3)
+    maze_gen = MazeGenerator(4, 4, entry, exit, 0)
 
 #    ascii_rend = AsciiRenderer(bla bla)
 
@@ -234,11 +301,11 @@ def main():
         print("Entry and exit values validated")
 
 #    ascii_rend.paint(logo)
-
-    for cell in logo:
-        y, x = cell
-#        ascii_rend.maze_colors[y][x] = 42
-        test_grid[y][x] = 42
+    if logo:
+        for cell in logo:
+            y, x = cell
+#            ascii_rend.maze_colors[y][x] = 42
+            test_grid[y][x] = 42
     y, x = entry
 #    ascii_rend.maze_colors[y][x] = 2
     test_grid[y][x] = 20
@@ -253,15 +320,21 @@ def main():
 
     maze_generator = maze_gen.generator_method
     # Generator passo a passo do algoritmo
-    # Um tuple por passo (y, x, valor paredes)
-    # para aplicar directamente na grid?
+    # Um tuple por passo (y, x, valor paredes) para aplicar directamente na grid?
     # Lista completa no fim
-
-    for _ in maze_generator:
-        next_grid = next(maze_generator)
-    for row in next_grid:
-        print(row)
+    next_grid = []
+    for step in maze_generator:
+        next_grid = step
+        print(next_grid)
+        print()
+#    for row in next_grid:
+#        print(row)
 #        print()
+    output = maze_gen.bfs(next_grid, entry, exit)
+    print(output[1])
+    print()
+    for line in output[0]:
+        print(line)
     print()
 
 
