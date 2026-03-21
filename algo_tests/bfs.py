@@ -1,17 +1,6 @@
 from collections import deque
+from typing import List, Dict
 
-
-graph = {
-  'A' : ['B','C'],
-  'B' : ['D', 'E', 'F'],
-  'C' : ['G'],
-  'D' : [],
-  'E' : [],
-  'F' : ['H'],
-  'G' : ['I'],
-  'H' : [],
-  'I' : []
-}
 
 maze_grid = [
     [3, 13, 11, 11],
@@ -21,31 +10,63 @@ maze_grid = [
 ]
 
 
-def bfs(graph, node):
-    # The video has visited as an array. I changed this to set because 'n not in visited' below is O(1) instead of O(n).
-    # See this link for more: https://wiki.python.org/moin/TimeComplexity.
+def bfs(cells: List[list[int]], entry: tuple[int, int],
+        exit: tuple[int, int]) -> list[list[tuple[int, int]], str]:
+    # Visited is a set for complexity.
+    # 'n not in visited' below is O(1) instead of O(n).
     visited = set()
-    # The video has queue as an array. I changed this to deque because popping the first element is O(1) instead of O(n).
-    # See this link for more: https://wiki.python.org/moin/TimeComplexity.
+    # Queue is a deque for complexity too.
+    # Popping the first element is O(1) instead of O(n).
     queue = deque()
 
-    visited.add(node)
-    queue.append(node)
+    prev_cell: Dict[tuple[int, int], tuple[int, int], int] = dict()
+    dir_str = "NESW"
+
+    visited.add(entry)
+    queue.append(entry)
 
     while queue:
-        # popleft is O(1). For an array, pop(0) is O(n). Hence the change to deque from array.
-        s = queue.popleft()
-        print(s, end = ' ')
+        y, x = queue.popleft()
 
-        for n in graph[s]:
-            # Because visited is a set, this lookup is O(1).
-            if n not in visited:
-                visited.add(n)
-                queue.append(n)
+        if (y, x) == exit:
+            break
+
+        for i in range(4):
+            if cells[y][x] & (1 << i) == 0:
+                ny = y
+                nx = x
+                if i == 0:
+                    ny -= 1
+                elif i == 1:
+                    nx += 1
+                elif i == 2:
+                    ny += 1
+                elif i == 3:
+                    nx -= 1
+                next = (ny, nx)
+                if next not in visited:
+                    prev_cell[next] = ((y, x), i)
+                    visited.add(next)
+                    queue.append(next)
+    path: str = ''
+    coords: List[tuple[int, int]] = []
+    current = exit
+    coords.append(exit)
+    while current != entry:
+        (py, px), i = prev_cell[current]
+        path = dir_str[i] + path
+        coords.insert(0, (py, px))
+        current = (py, px)
+
+    return [coords, path]
 
 
 def main():
-    bfs(graph, 'A')
+    output = bfs(maze_grid, (0, 0), (2, 3))
+    print(output[1])
+    print()
+    for line in output[0]:
+        print(line)
 
 
 main()
