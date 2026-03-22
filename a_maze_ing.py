@@ -152,7 +152,7 @@ if __name__ == "__main__":
     anim_error = False
     animator = False
     seed = True
-    maze_gen = MazeGenerator(width, height, entry, exit, seed_val)
+    maze_gen = MazeGenerator(width, height, entry, exit, seed_val, perfect)
     maze_grid = maze_gen.initialize()
     gen_grid = maze_grid.cells
     logo = maze_gen.logo
@@ -226,10 +226,10 @@ if __name__ == "__main__":
             elif command == "g" or command == "generate":
                 if seed is True:
                     maze_gen = MazeGenerator(width, height, entry, exit,
-                                             random.seed())
+                                             random.seed(), perfect)
                 else:
                     maze_gen = MazeGenerator(width, height,
-                                             entry, exit, seed_val)
+                                             entry, exit, seed_val, perfect)
                 maze_generated = maze_gen.generator_method
                 maze = AsciiRender(maze_gen.width, maze_gen.height,
                                    maze_gen.entry, maze_gen.exit)
