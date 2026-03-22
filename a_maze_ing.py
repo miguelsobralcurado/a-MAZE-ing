@@ -34,7 +34,7 @@ def validate_keys(config: Dict[str, str]) -> None:
     try:
         required = ["WIDTH", "HEIGHT",
                     "ENTRY", "EXIT",
-                    "OUTPUT_FILE", "PERFECT"]
+                    "OUTPUT_FILE", "PERFECT", "ALGORITHM"]
         for k in required:
             if k not in config:
                 raise ValueError
@@ -61,6 +61,8 @@ def validate_values(config: Dict[str, str]) -> None:
         for c in columns:
             if c < 0 or c >= height:
                 raise ValueError(f"Error: {c} not within maze bounds")
+        if config["ALGORITHM"] not in ["prim", "dfs"]:
+            raise ValueError("Error: Invalid algorithm. Use prim or dfs")
     except ValueError as e:
         print(e)
         sys.exit(1)
@@ -142,19 +144,20 @@ if __name__ == "__main__":
     entry = format_coords(config["ENTRY"])
     exit = format_coords(config["EXIT"])
     seed_val = config["SEED"] if "SEED" in config else None
+    algorithm = config["ALGORITHM"]
     command = ""
     color = False
     show_path = False
-    gen_maze = None
+    generated = None
     gen_path = None
     comm_error = ""
     anim_speed = "off"
     anim_error = False
     animator = False
     seed = True
-    maze_gen = MazeGenerator(width, height, entry, exit, seed_val)
-    maze_grid = maze_gen.initialize()
-    gen_grid = maze_grid.cells
+    maze_gen = MazeGenerator(width, height, entry, exit, seed_val,
+                             perfect, algorithm)
+#    gen_grid = maze_gen.maze_grid.cells
     logo = maze_gen.logo
     maze = AsciiRender(maze_gen.width, maze_gen.height,
                        maze_gen.entry, maze_gen.exit)
@@ -216,39 +219,39 @@ if __name__ == "__main__":
     try:
         while True:
             if command == "q" or command == "quit":
-                gen_maze = None
+                generated = None
                 raise Error
             elif command == "t" or command == "test":
-                gen_maze = grid
+                generated = grid
                 color_grid = is_42
                 path_grid = path
                 maze = AsciiRender(11, 13, (10, 2), (1, 9))
             elif command == "g" or command == "generate":
                 if seed is True:
                     maze_gen = MazeGenerator(width, height, entry, exit,
-                                             random.seed())
+                                             random.seed(), perfect, algorithm)
                 else:
                     maze_gen = MazeGenerator(width, height,
-                                             entry, exit, seed_val)
-                maze_generated = maze_gen.generator_method
+                                             entry, exit, seed_val, perfect, algorithm)
+                maze_generator = maze_gen.generate_maze()
                 maze = AsciiRender(maze_gen.width, maze_gen.height,
                                    maze_gen.entry, maze_gen.exit)
                 animate = Animator(maze)
                 color_grid = maze.set_colors(logo)
                 path_grid = None
-                for next in maze_generated:
-                    gen_maze = next
+                for next in maze_generator:
+                    generated = next
                     if animator is True:
-                        animate.print_frame(gen_maze,
+                        animate.print_frame(generated,
                                             path_grid,
                                             color_grid,
                                             color)
                         time.sleep(speed_types[anim_speed])
                     os.system('clear')
-                path_output = maze_gen.bfs(gen_maze,
-                                           maze_gen.entry,
-                                           maze_gen.exit)
-                create_output(gen_maze, output_file, maze, path_output[1])
+                path_output = maze_gen.solve(generated,
+                                             maze_gen.entry,
+                                             maze_gen.exit)
+                create_output(generated, output_file, maze, path_output[1])
             elif command == "p" or command == "path":
                 if show_path is False:
                     show_path = True
@@ -271,12 +274,12 @@ if __name__ == "__main__":
                     seed = False
             elif command:
                 comm_error = "Error - Invalid command"
-            if gen_maze is not None:
+            if generated is not None:
                 if show_path is False:
-                    maze.draw_maze(gen_maze, None)
+                    maze.draw_maze(generated, None)
                     maze.builder(color_grid, color)
                 else:
-                    maze.draw_maze(gen_maze, path_output)
+                    maze.draw_maze(generated, path_output)
                     maze.builder(color_grid, color)
             print()
             if comm_error != "":
