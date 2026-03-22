@@ -26,7 +26,7 @@ class AsciiRender:
 
     def draw_maze(self,
                   grid: list[list[int]],
-                  path: Optional[list[list[tuple], str]] = None) -> None:
+                  path: Optional[tuple[list[tuple], str]] = None) -> None:
         self.maze_pieces = []
         self.maze_color = []
         x = 0
@@ -49,12 +49,13 @@ class AsciiRender:
 
     def draw_path(self,
                   empty_grid: list[list[str]],
-                  f_path: list[list[tuple], str]) -> list[list[str]]:
+                  f_path: tuple[list[tuple], str]) -> list[list[str]]:
         i = 0
-        for coords in f_path[0]:
-            y, x = coords
-            if i < len(f_path[1]):
-                empty_grid[y][x] = f_path[1][i]
+        coords, string = f_path
+        for coord in coords:
+            y, x = coord
+            if i < len(string):
+                empty_grid[y][x] = string[i]
             i += 1
         return empty_grid
 
