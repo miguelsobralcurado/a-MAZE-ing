@@ -140,7 +140,7 @@ if __name__ == "__main__":
     width = int(config["WIDTH"])
     height = int(config["HEIGHT"])
     output_file = config["OUTPUT_FILE"]
-    perfect = config["PERFECT"]
+    perfect = config["PERFECT"] == "True"
     entry = format_coords(config["ENTRY"])
     exit = format_coords(config["EXIT"])
     seed_val = config["SEED"] if "SEED" in config else None
