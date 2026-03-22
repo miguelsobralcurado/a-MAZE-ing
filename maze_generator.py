@@ -137,7 +137,8 @@ class DFSGenerator:
                 stack.pop()
 
         if self.perfect is False:
-            extras = round((maze.height * maze.width) * 0.2)
+            # extras = round((maze.height * maze.width) * 0.2)
+            extras = 15
             while extras:
                 y = self.random.randint(0, maze.height - 1)
                 x = self.random.randint(0, maze.width - 1)
@@ -268,9 +269,9 @@ def main():
     exit = (9, 8)
     maze_gen = MazeGenerator(10, 10, entry, exit, 0, False, "prim")
 
-    maze_grid = maze_gen.maze_grid
+#    maze_grid = maze_gen.maze_grid
 
-    logo = maze_gen.logo
+#    logo = maze_gen.logo
     # Lista tuples y, x para aplicar directamente na grid
 
     try:
