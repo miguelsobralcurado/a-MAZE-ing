@@ -6,16 +6,13 @@ build-backend = "setuptools.build_meta"
 name = "mazegen"
 version = "1.0.0"
 description = "Reusable maze generator module"
-readme = "README.md"
+readme = "README_MAZEGEN.md"
 requires-python = ">=3.10"
 authors = [
-    {name = "Your Name or Team Name"}
+    { name = "acaldeir" },
+    { name = "rusilva-" }
 ]
 license = {text = "MIT"}
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
-]
 
 [tool.setuptools]
 py-modules = ["mazegen"]

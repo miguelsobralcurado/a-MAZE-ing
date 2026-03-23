@@ -74,7 +74,7 @@ class MazeGrid:
                                 for _ in range(height)]
         self.width = width
         self.height = height
-        self.pat_coords: Optional[Set[Coord]] = None
+        self.pat_coords: Set[Coord] | None = None
 
     def add_pattern(self, pattern: List[str]) -> set[Coord]:
         """Place a `#`-based pattern centered in the grid.
@@ -92,7 +92,7 @@ class MazeGrid:
         """
         y_offset = self.height // 2 - len(pattern) // 2
         x_offset = self.width // 2 - len(pattern[0]) // 2
-        self.pat_coords: Set[tuple[int, int]] = {
+        self.pat_coords = {
             (r + y_offset, c + x_offset)
             for r, row in enumerate(pattern)
             for c, col in enumerate(row)
