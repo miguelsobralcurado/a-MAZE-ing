@@ -63,6 +63,10 @@ def validate_values(config: Dict[str, str]) -> None:
                 raise ValueError(f"Error: {c} not within maze bounds")
         if config["ALGORITHM"] not in ["prim", "dfs"]:
             raise ValueError("Error: Invalid algorithm. Use prim or dfs")
+        if (str.capitalize(config["PERFECT"]) != "True" and
+            str.capitalize(config["PERFECT"]) != "False"):
+            raise ValueError("Error: Invalid boolean value "
+                             f"'{config["PERFECT"]}'. Expected True/False")
     except ValueError as e:
         print(e)
         sys.exit(1)
@@ -108,6 +112,16 @@ def format_coords(to_format: str) -> Tuple[int, int]:
         sys.exit(1)
 
 
+def format_bool(to_format: str) -> bool:
+    value = True
+    try:
+        if to_format == "False":
+            value = False
+        return value
+    except ValueError:
+        print("Error: An unexpected error has occurred")
+
+
 def format_maze(maze_grid: list[list[int]]) -> list[list[str]]:
     f_maze = maze_grid
     for row in f_maze:
@@ -140,7 +154,7 @@ if __name__ == "__main__":
     width = int(config["WIDTH"])
     height = int(config["HEIGHT"])
     output_file = config["OUTPUT_FILE"]
-    perfect = config["PERFECT"]
+    perfect = format_bool(str.capitalize(config["PERFECT"]))
     entry = format_coords(config["ENTRY"])
     exit = format_coords(config["EXIT"])
     seed_val = config["SEED"] if "SEED" in config else None
@@ -155,6 +169,7 @@ if __name__ == "__main__":
     anim_error = False
     animator = False
     seed = True
+    debug = False
     maze_gen = MazeGenerator(width, height, entry, exit, seed_val,
                              perfect, algorithm)
 #    gen_grid = maze_gen.maze_grid.cells
@@ -175,32 +190,32 @@ if __name__ == "__main__":
                  [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
                  [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
                  [6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 12]]
-    grid = [[3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9],
-            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-            [2, 0, 4, 0, 4, 0, 4, 4, 4, 0, 8],
-            [2, 8, 15, 10, 15, 10, 15, 15, 15, 2, 8],
-            [2, 8, 15, 14, 15, 2, 5, 13, 15, 2, 8],
-            [2, 8, 15, 15, 15, 10, 15, 15, 15, 2, 8],
-            [2, 0, 1, 9, 15, 10, 15, 7, 5, 0, 8],
-            [2, 0, 0, 8, 15, 10, 15, 15, 15, 2, 8],
-            [2, 0, 0, 0, 1, 0, 1, 1, 1, 0, 8],
-            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-            [6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 12]]
-    path = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0],
-            [0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0],
-            [0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0],
-            [0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+    grid = [[9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
+            [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+            [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+            [8, 0, 4, 0, 4, 0, 4, 4, 4, 0, 2],
+            [8, 2, 15, 10, 15, 10, 15, 15, 15, 8, 2],
+            [8, 2, 15, 14, 15, 8, 5, 7, 15, 8, 2],
+            [8, 2, 15, 15, 15, 10, 15, 15, 15, 8, 2],
+            [8, 0, 1, 3, 15, 10, 15, 13, 5, 0, 2],
+            [8, 0, 0, 2, 15, 10, 15, 15, 15, 8, 2],
+            [8, 0, 0, 0, 1, 0, 1, 1, 1, 0, 2],
+            [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+            [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+            [12, 4, 4, 4, 4, 4, 4, 4, 4, 4, 6]]
+    path = [["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "C", "", "C", "", "C", "C", "C", "", ""],
+            ["", "", "C", "", "C", "", "", "", "C", "", ""],
+            ["", "", "C", "C", "C", "", "C", "C", "C", "", ""],
+            ["", "", "", "", "C", "", "C", "", "", "", ""],
+            ["", "", "", "", "C", "", "C", "C", "C", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""]]
     is_42 = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -214,7 +229,7 @@ if __name__ == "__main__":
              [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-    os.system('clear')
+    os.system('cls')
     print("Welcome to this a_MAZE_ing maze tester!")
     try:
         while True:
@@ -232,13 +247,16 @@ if __name__ == "__main__":
                                              random.seed(), perfect, algorithm)
                 else:
                     maze_gen = MazeGenerator(width, height,
-                                             entry, exit, seed_val, perfect, algorithm)
+                                             entry, exit, seed_val,
+                                             perfect, algorithm)
                 maze_generator = maze_gen.generate_maze()
                 maze = AsciiRender(maze_gen.width, maze_gen.height,
                                    maze_gen.entry, maze_gen.exit)
                 animate = Animator(maze)
                 color_grid = maze.set_colors(logo)
                 path_grid = None
+                if animator is True:
+                    animate.load_maze(color, speed_types[anim_speed])
                 for next in maze_generator:
                     generated = next
                     if animator is True:
@@ -247,16 +265,32 @@ if __name__ == "__main__":
                                             color_grid,
                                             color)
                         time.sleep(speed_types[anim_speed])
-                    os.system('clear')
+                    os.system('cls')
+                if animate.curr_load < animate.max_load:
+                    animate.curr_load = animate.max_load
                 path_output = maze_gen.solve(generated,
                                              maze_gen.entry,
                                              maze_gen.exit)
+                if show_path is True:
+                    animate.curr_load = 0
+                    animate.anim_path(path_output, color,
+                                      speed_types[anim_speed])
                 create_output(generated, output_file, maze, path_output[1])
             elif command == "p" or command == "path":
                 if show_path is False:
                     show_path = True
                 else:
                     show_path = False
+            elif command == "perf" or command == "perfect":
+                if perfect is False:
+                    perfect = True
+                else:
+                    perfect = False
+            elif command == "algo" or command == "algorithm":
+                if algorithm == "dfs":
+                    algorithm = "prim"
+                elif algorithm == "prim":
+                    algorithm = "dfs"
             elif command == "c" or command == "color":
                 if color is False:
                     color = True
@@ -272,6 +306,11 @@ if __name__ == "__main__":
                     seed = True
                 else:
                     seed = False
+            elif command == "debug":
+                if debug is False:
+                    debug = True
+                else:
+                    debug = False
             elif command:
                 comm_error = "Error - Invalid command"
             if generated is not None:
@@ -279,8 +318,12 @@ if __name__ == "__main__":
                     maze.draw_maze(generated, None)
                     maze.builder(color_grid, color)
                 else:
-                    maze.draw_maze(generated, path_output)
-                    maze.builder(color_grid, color)
+                    if path_grid == path:
+                        maze.draw_maze(generated, path_grid)
+                        maze.builder(color_grid, color)
+                    else:
+                        maze.draw_maze(generated, path_output)
+                        maze.builder(color_grid, color)
             print()
             if comm_error != "":
                 print("\x1b[0m" + comm_error)
@@ -293,14 +336,26 @@ if __name__ == "__main__":
             print(" 'a' or 'animate' - Animates the next generation")
             print(" 's' or 'seed' - Toggles generation using the seed "
                   "in config.txt")
+            print(" 'perf' or 'perfect' - Toggles perfect maze generation")
+            print(" 'algo' or 'algorithm' - Toggles algorithm used")
+            print(" 'debug' - Toggles detailed flag settings")
             print(" 'q' or 'quit' - Quits the program")
             print()
-            if seed is False:
-                print("# The maze will generate from the config seed")
-            if show_path is True:
-                print("# Animator will show the pathing process...")
-            if anim_speed != "off":
-                print(f"# Animator speed is set to {anim_speed}")
+            if debug is True:
+                if perfect is True:
+                    print("# The maze will generate a perfect path")
+                else:
+                    print("# The maze will generate an imperfect path")
+                if seed is False:
+                    print("# The maze will generate from the config seed")
+                if show_path is True:
+                    print("# Animator will show the pathing process")
+                if anim_speed != "off":
+                    print(f"# Animator speed is set to {anim_speed}")
+                print(f"# Current algorithm being used: {algorithm}")
+                print(f"# Current seed generated: {maze_gen.seed}")
+                print()
+                print("# Debug is showing current setting toggles")
             command = str.casefold(input("Choose a command: "))
             if command == "a" or command == "animate":
                 while anim_speed in speed_types.keys():
@@ -336,7 +391,7 @@ if __name__ == "__main__":
                 anim_error = False
             if comm_error != "":
                 comm_error = ""
-            os.system('clear')
+            os.system('cls')
     except (KeyboardInterrupt, Error) as e:
         if type(e) is KeyboardInterrupt:
             print("\x1b[0m" + "\n\nForcibly exiting program...\n")
