@@ -4,7 +4,7 @@ import os
 import random
 # from config import load_config
 from typing import Dict, Any, Tuple
-from maze_generator import MazeGenerator
+from mazegen import MazeGenerator
 from render_test import AsciiRender, Animator
 
 

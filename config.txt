@@ -5,4 +5,4 @@ EXIT=22,9
 OUTPUT_FILE=output_maze.txt
 PERFECT=False
 SEED=100
-ALGORITHM=prim
+ALGORITHM=dfs
