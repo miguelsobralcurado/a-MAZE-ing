@@ -261,7 +261,7 @@ if __name__ == "__main__":
                 path_output = maze_gen.solve(generated,
                                              maze_gen.entry,
                                              maze_gen.exit)
-                if show_path is True:
+                if show_path is True and animator is True:
                     animate.curr_load = 0
                     animate.anim_path(path_output, color,
                                       speed_types[anim_speed])
