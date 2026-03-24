@@ -36,6 +36,8 @@ class AsciiRender:
         y = 0
         if path is None:
             path_grid = self.blank_grid()
+        elif isinstance(path, list):
+            path_grid = path
         else:
             path_grid = self.draw_path(self.blank_grid("str"), path)
         for row in grid:
