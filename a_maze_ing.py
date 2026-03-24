@@ -155,6 +155,8 @@ if __name__ == "__main__":
     anim_error = False
     animator = False
     seed = True
+    debug = False
+    maze_seed = 0
     maze_gen = MazeGenerator(width, height, entry, exit, seed_val,
                              perfect, algorithm)
 #    gen_grid = maze_gen.maze_grid.cells
@@ -188,19 +190,19 @@ if __name__ == "__main__":
             [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
             [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
             [6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 12]]
-    path = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0],
-            [0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0],
-            [0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0],
-            [0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+    path = [["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "C", "", "C", "", "C", "C", "C", "", ""],
+            ["", "", "C", "", "C", "", "", "", "C", "", ""],
+            ["", "", "C", "C", "C", "", "C", "C", "C", "", ""],
+            ["", "", "", "", "C", "", "C", "", "", "", ""],
+            ["", "", "", "", "C", "", "C", "C", "C", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", "", "", ""]]
     is_42 = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -228,17 +230,23 @@ if __name__ == "__main__":
                 maze = AsciiRender(11, 13, (10, 2), (1, 9))
             elif command == "g" or command == "generate":
                 if seed is True:
+                    maze_seed = random.randint(0, 99999999)
                     maze_gen = MazeGenerator(width, height, entry, exit,
-                                             random.seed(), perfect, algorithm)
+                                             random.seed(maze_seed), perfect,
+                                             algorithm)
                 else:
+                    maze_seed = seed_val
                     maze_gen = MazeGenerator(width, height,
-                                             entry, exit, seed_val, perfect, algorithm)
+                                             entry, exit, seed_val,
+                                             perfect, algorithm)
                 maze_generator = maze_gen.generate_maze()
                 maze = AsciiRender(maze_gen.width, maze_gen.height,
                                    maze_gen.entry, maze_gen.exit)
                 animate = Animator(maze)
                 color_grid = maze.set_colors(logo)
                 path_grid = None
+                if animator is True:
+                    animate.load_maze(color, speed_types[anim_speed])
                 for next in maze_generator:
                     generated = next
                     if animator is True:
@@ -248,15 +256,31 @@ if __name__ == "__main__":
                                             color)
                         time.sleep(speed_types[anim_speed])
                     os.system('clear')
+                if animate.curr_load < animate.max_load:
+                    animate.curr_load = animate.max_load
                 path_output = maze_gen.solve(generated,
                                              maze_gen.entry,
                                              maze_gen.exit)
+                if show_path is True:
+                    animate.curr_load = 0
+                    animate.anim_path(path_output, color,
+                                      speed_types[anim_speed])
                 create_output(generated, output_file, maze, path_output[1])
             elif command == "p" or command == "path":
                 if show_path is False:
                     show_path = True
                 else:
                     show_path = False
+            elif command == "perf" or command == "perfect":
+                if perfect is False:
+                    perfect = True
+                else:
+                    perfect = False
+            elif command == "algo" or command == "algorithm":
+                if algorithm == "dfs":
+                    algorithm = "prim"
+                elif algorithm == "prim":
+                    algorithm = "dfs"
             elif command == "c" or command == "color":
                 if color is False:
                     color = True
@@ -272,6 +296,11 @@ if __name__ == "__main__":
                     seed = True
                 else:
                     seed = False
+            elif command == "debug":
+                if debug is False:
+                    debug = True
+                else:
+                    debug = False
             elif command:
                 comm_error = "Error - Invalid command"
             if generated is not None:
@@ -293,14 +322,26 @@ if __name__ == "__main__":
             print(" 'a' or 'animate' - Animates the next generation")
             print(" 's' or 'seed' - Toggles generation using the seed "
                   "in config.txt")
+            print(" 'perf' or 'perfect' - Toggles perfect maze generation")
+            print(" 'algo' or 'algorithm' - Toggles algorithm used")
+            print(" 'debug' - Toggles detailed flag settings")
             print(" 'q' or 'quit' - Quits the program")
             print()
-            if seed is False:
-                print("# The maze will generate from the config seed")
-            if show_path is True:
-                print("# Animator will show the pathing process...")
-            if anim_speed != "off":
-                print(f"# Animator speed is set to {anim_speed}")
+            if debug is True:
+                if perfect is True:
+                    print("# The maze will generate a perfect path")
+                else:
+                    print("# The maze will generate an imperfect path")
+                if seed is False:
+                    print("# The maze will generate from the config seed")
+                if show_path is True:
+                    print("# Animator will show the pathing process")
+                if anim_speed != "off":
+                    print(f"# Animator speed is set to {anim_speed}")
+                print(f"# Current algorithm being used: {algorithm}")
+                print(f"# Current seed generated: {maze_seed}")
+                print()
+                print("# Debug is showing current setting toggles")
             command = str.casefold(input("Choose a command: "))
             if command == "a" or command == "animate":
                 while anim_speed in speed_types.keys():

@@ -1,3 +1,6 @@
+import os
+import time
+import random
 from typing import Optional, Any
 
 
@@ -62,7 +65,7 @@ class AsciiRender:
     def calc_piece(self, curr_cell: int,
                    path: Optional[str] = None,
                    x: int = 0, y: int = 0) -> set[str]:
-        directions = {"N": "🮧", "E": "🮥", "S": "🮦", "W": "🮤"}
+        directions = {"N": "🮧", "E": "🮥", "S": "🮦", "W": "🮤", "C": "🯅"}
         if curr_cell == 42:
             return
         cell_base = [0, 0, 0, 0]
@@ -122,6 +125,7 @@ class AsciiRender:
         color_42 = "\x1b[95m"
         maze_entry = "\x1b[92m"
         maze_exit = "\x1b[93m"
+        off_color = "\x1b[30m"
         if alt_color is True:
             color = "\x1b[36m"
             color_42 = "\x1b[31m"
@@ -131,6 +135,8 @@ class AsciiRender:
             color = maze_entry
         elif code == 3:
             color = maze_exit
+        elif code == 4:
+            color = off_color
         return color
 
     def builder(self, colors: list[list[int]],
@@ -155,16 +161,120 @@ class AsciiRender:
         print(frame_color + "└" + ("─────────" * (self.width)) + "┘")
 
 
+# class Animator:
+#     def __init__(self, to_animate: AsciiRender) -> None:
+#         self.to_animate = to_animate
+
+#     def print_frame(self, grid: list[list[int]],
+#                     path: list[list[int]],
+#                     color_grid: list[list[int]],
+#                     color: bool,) -> None:
+#         self.to_animate.draw_maze(grid, path)
+#         self.to_animate.builder(color_grid, color)
+
+
 class Animator:
     def __init__(self, to_animate: AsciiRender) -> None:
         self.to_animate = to_animate
+        self.curr_load = 0
+        self.max_load = 50
+        self.dots = 1
+        self.last_frame = []
+
+    def loading(self, type: str) -> str:
+        if type == "start":
+            if self.curr_load < 20:
+                load_message = "LOADING MAZE"
+            else:
+                load_message = "INJECTING 42"
+        elif type == "gen":
+            if self.curr_load < 10:
+                load_message = "GENERATING MAZE"
+            elif self.curr_load >= 10 and self.curr_load < 25:
+                load_message = "LOOKING FOR EXIT"
+            else:
+                load_message = "OPENING NEW PATHWAYS"
+        elif type == "path":
+            load_message = "CHARTING SHORTEST PATH"
+        if random.randint(0, 10) > 3:
+            self.curr_load += random.randint(1, 3)
+            if self.curr_load > self.max_load:
+                self.curr_load = self.max_load
+        if self.dots < 3:
+            self.dots += 1
+        else:
+            self.dots = 1
+        print()
+        print(f"    ----- {load_message}{'.' * self.dots}"
+              f"{' ' * (3 - self.dots)} -----")
+        print(("█" * self.curr_load) +
+              ("─" * (self.max_load - self.curr_load)))
+
+    def load_maze(self,
+                  color: bool, anim_speed: float) -> None:
+        x = 0
+        y = 0
+        blank_grid = self.to_animate.blank_grid()
+        for row in blank_grid:
+            for col in row:
+                blank_grid[y][x] = 15
+                x += 1
+            y += 1
+            x = 0
+        y = 0
+        start_grid = self.to_animate.blank_grid()
+        for row in start_grid:
+            for col in row:
+                start_grid[y][x] = 4
+                x += 1
+            y += 1
+            x = 0
+        y = 0
+        for row in start_grid:
+            for col in row:
+                start_grid[y][x] = 0
+                x += 1
+            self.to_animate.draw_maze(blank_grid, None)
+            self.to_animate.builder(start_grid, color)
+            if y == len(start_grid) - 1:
+                while self.curr_load != self.max_load:
+                    self.loading("start")
+                    time.sleep(0.1)
+                    print("\033[F\033[2K" * 3, end="", flush=True)
+            else:
+                self.loading("start")
+            time.sleep(0.1)
+            os.system('clear')
+            y += 1
+            x = 0
+        self.curr_load = 0
 
     def print_frame(self, grid: list[list[int]],
-                    path: list[list[int]],
+                    path: list[list[str]],
                     color_grid: list[list[int]],
                     color: bool,) -> None:
         self.to_animate.draw_maze(grid, path)
         self.to_animate.builder(color_grid, color)
+        self.loading("gen")
+        self.last_frame = [grid, path, color_grid]
+
+    def anim_path(self, solution: tuple[list[tuple], str],
+                  color: bool, anim_speed: float) -> None:
+        i = 0
+        coords, path = solution
+        if anim_speed < 0.5:
+            anim_speed = anim_speed * 2
+        for coord in coords:
+            if i < len(path):
+                curr_frame = (coords[:(i + 1)], (path[:i] + "C"))
+            else:
+                curr_frame = solution
+            i += 1
+            self.to_animate.draw_maze(self.last_frame[0], curr_frame)
+            self.to_animate.builder(self.last_frame[2], color)
+            self.loading("path")
+            time.sleep(anim_speed)
+            os.system('clear')
 
 # print("\033[F\033[2K" * n, end="", flush=True) (clears n amount of lines)
 # 0  = all open

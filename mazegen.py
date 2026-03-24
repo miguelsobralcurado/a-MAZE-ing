@@ -226,7 +226,7 @@ class MazeGrid:
                 # All vertical shared edges inside the 3x3 must be open
                 vertical_open = all(
                     self._is_edge_open(top + dy, left + dx,
-                                    top + dy + 1, left + dx, pending)
+                                       top + dy + 1, left + dx, pending)
                     for dy in range(2)
                     for dx in range(3)
                 )
@@ -253,7 +253,8 @@ class PrimGenerator:
         self.random = random.Random(seed)
         self.perfect = perfect
 
-    def generate(self, maze: MazeGrid) -> Generator[CellGrid, None, None]:
+    def generate(self, maze: MazeGrid, entry: Coord
+                 ) -> Generator[CellGrid, None, None]:
         """Generate a maze incrementally.
 
         The generator yields the maze grid after each wall removal, making it
@@ -266,7 +267,7 @@ class PrimGenerator:
             The current maze cell grid after each generation step.
         """
         walls: List[WallEdge] = []
-        start = (0, 0)
+        start = entry
         visited: Set[Coord] = {(start)}
 
         walls.extend(
@@ -333,7 +334,8 @@ class DFSGenerator:
         self.random = random.Random(seed)
         self.perfect = perfect
 
-    def generate(self, maze: MazeGrid) -> Generator[CellGrid, None, None]:
+    def generate(self, maze: MazeGrid, entry: Coord
+                 ) -> Generator[CellGrid, None, None]:
         """Generate a maze incrementally using DFS backtracking.
 
         Args:
@@ -342,8 +344,8 @@ class DFSGenerator:
         Yields:
             The current maze cell grid after each wall removal.
         """
-        stack: List[Coord] = [(0, 0)]
-        visited: Set[Coord] = {(0, 0)}
+        stack: List[Coord] = [entry]
+        visited: Set[Coord] = {entry}
 
         while stack:
             y, x = stack[-1]
@@ -514,7 +516,7 @@ class MazeGenerator:
         if self.algorithm not in gen:
             raise ValueError("Unkwnown algorithm")
         return gen[self.algorithm](self.seed, self.perfect).generate(
-            self.maze_grid
+            self.maze_grid, self.entry
         )
 
     @staticmethod
