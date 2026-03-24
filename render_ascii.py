@@ -20,7 +20,7 @@ class AsciiRender:
         grid = []
         for i in range(self.height):
             grid.append([])
-            for j in range(self.width):
+            for _ in range(self.width):
                 if type == "int":
                     grid[i].append(0)
                 elif type == "str":
@@ -42,7 +42,7 @@ class AsciiRender:
             path_grid = self.draw_path(self.blank_grid("str"), path)
         for row in grid:
             r = []
-            for col in row:
+            for _ in row:
                 r.append(self.calc_piece(grid[y][x],
                                          path_grid[y][x],
                                          x,

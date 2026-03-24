@@ -2,27 +2,9 @@ import sys
 import time
 import os
 import random
-# from config import load_config
 from typing import Dict, Any, Tuple
 from mazegen import MazeGenerator
-from render_test import AsciiRender, Animator
-
-
-# def main(argv: list[str]) -> int:
-#     try:
-#         with open(argv[1]) as cfg:
-#         gen = MazeGenerator()
-#         while True:
-#             if gen.visual is True:
-#                 iter = gen.Generate()
-#                 animate_gen(iter)
-#                 time.sleep(anim_speed)
-#             if gen.Complete is True:
-#                 break
-#     except FileNotFoundError:
-#         print("Usage: python3 a_maze_ing.py <config file path>",
-#               file=sys.stderr)
-#         return 2
+from render_ascii import AsciiRender, Animator
 
 
 class Error(Exception):

@@ -16,4 +16,4 @@ python -m pip install --upgrade pip build wheel setuptools
 
 python -m build
 
-pip install dist/mazegen-1.0.0.tar.gz
+pip install mazegen-1.0.0.tar.gz
