@@ -2,14 +2,18 @@ import sys
 import time
 import os
 import random
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 from mazegen import MazeGenerator
 from render_ascii import AsciiRender, Animator
 
+Coord = tuple[int, int]
+PathGrid = list[list[str]]
+CellGrid = list[list[int]]
+
 
 class Error(Exception):
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
 
 
 def validate_keys(config: Dict[str, str]) -> None:
@@ -78,9 +82,10 @@ def parse_config(filepath: str) -> Dict[str, Any]:
             print(f"Error: An unexpected error has occurred: {e}",
                   file=sys.stderr)
             sys.exit(1)
+    return {}
 
 
-def format_coords(to_format: str) -> Tuple[int, int]:
+def format_coords(to_format: str) -> Coord:
     try:
         x, y = map(int, to_format.split(","))
         return (y, x)
@@ -90,8 +95,8 @@ def format_coords(to_format: str) -> Tuple[int, int]:
         sys.exit(1)
 
 
-def format_maze(maze_grid: list[list[int]]) -> list[list[str]]:
-    f_maze = maze_grid
+def format_maze(maze_grid: CellGrid) -> PathGrid:
+    f_maze: list[list[Any]] = maze_grid
     for row in f_maze:
         for cell in row:
             cell = hex(cell)
@@ -99,7 +104,7 @@ def format_maze(maze_grid: list[list[int]]) -> list[list[str]]:
     return f_maze
 
 
-def create_output(maze_grid: list[list[int]],
+def create_output(maze_grid: CellGrid,
                   output_fname: str,
                   maze: AsciiRender,
                   path_str: str = "") -> None:
@@ -117,21 +122,24 @@ def create_output(maze_grid: list[list[int]],
         print(f"Error: Unexpected error writing to file {e}")
 
 
-if __name__ == "__main__":
-    config = parse_config("config.txt")
+def main() -> None:
+    if len(sys.argv) != 2:
+        print("Error: Incorrect number of arguments called. Expected 1",
+              file=sys.stderr)
+        sys.exit(1)
+    config = parse_config(sys.argv[1])
     width = int(config["WIDTH"])
     height = int(config["HEIGHT"])
     output_file = config["OUTPUT_FILE"]
     perfect = config["PERFECT"] == "True"
     entry = format_coords(config["ENTRY"])
     exit = format_coords(config["EXIT"])
-    seed_val = config["SEED"] if "SEED" in config else None
+    seed_val = int(config["SEED"]) if "SEED" in config else 0
     algorithm = config["ALGORITHM"]
     command = ""
     color = False
     show_path = False
-    generated = None
-    gen_path = None
+    generated: CellGrid = []
     comm_error = ""
     anim_speed = "off"
     anim_error = False
@@ -145,20 +153,7 @@ if __name__ == "__main__":
     logo = maze_gen.logo
     maze = AsciiRender(maze_gen.width, maze_gen.height,
                        maze_gen.entry, maze_gen.exit)
-    speed_types = {"off": "", "slow": 0.3, "normal": 0.1, "fast": 0.03}
-    test_grid = [[3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9],
-                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-                 [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
-                 [6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 12]]
+    speed_types = {"off": 0, "slow": 0.3, "normal": 0.1, "fast": 0.03}
     grid = [[9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
             [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
             [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
@@ -203,8 +198,8 @@ if __name__ == "__main__":
     try:
         while True:
             if command == "q" or command == "quit":
-                generated = None
-                raise Error
+                generated = []
+                sys.exit(1)
             elif command == "t" or command == "test":
                 generated = grid
                 color_grid = is_42
@@ -214,7 +209,7 @@ if __name__ == "__main__":
                 if seed is True:
                     maze_seed = random.randint(0, 99999999)
                     maze_gen = MazeGenerator(width, height, entry, exit,
-                                             random.seed(maze_seed), perfect,
+                                             maze_seed, perfect,
                                              algorithm)
                 else:
                     maze_seed = seed_val
@@ -226,7 +221,7 @@ if __name__ == "__main__":
                                    maze_gen.entry, maze_gen.exit)
                 animate = Animator(maze)
                 color_grid = maze.set_colors(logo)
-                path_grid = None
+                path_grid = []
                 if animator is True:
                     animate.load_maze(color, speed_types[anim_speed])
                 for next in maze_generator:
@@ -285,7 +280,7 @@ if __name__ == "__main__":
                     debug = False
             elif command:
                 comm_error = "Error - Invalid command"
-            if generated is not None:
+            if len(generated) > 0:
                 if show_path is False:
                     maze.draw_maze(generated, None)
                     maze.builder(color_grid, color)
@@ -294,7 +289,9 @@ if __name__ == "__main__":
                         maze.draw_maze(generated, path_grid)
                         maze.builder(color_grid, color)
                     else:
-                        maze.draw_maze(generated, path_output)
+                        path_grid = maze.draw_path(maze.blank_grid("str"),
+                                                   path_output)
+                        maze.draw_maze(generated, path_grid)
                         maze.builder(color_grid, color)
             print()
             if comm_error != "":
@@ -338,17 +335,17 @@ if __name__ == "__main__":
                     print(" 2 - Normal speed")
                     print(" 3 - Fast speed")
                     print()
-                    anim_speed = str.casefold(input("Animation speed = "))
-                    if anim_speed == "1":
+                    anim_input = str.casefold(input("Animation speed = "))
+                    if anim_input == "1":
                         anim_speed = "slow"
                         break
-                    elif anim_speed == "2":
+                    elif anim_input == "2":
                         anim_speed = "normal"
                         break
-                    elif anim_speed == "3":
+                    elif anim_input == "3":
                         anim_speed = "fast"
                         break
-                    elif anim_speed == "0":
+                    elif anim_input == "0":
                         anim_speed = "off"
                         break
                     else:
@@ -367,6 +364,10 @@ if __name__ == "__main__":
     except (KeyboardInterrupt, Error) as e:
         if type(e) is KeyboardInterrupt:
             print("\x1b[0m" + "\n\nForcibly exiting program...\n")
+
+
+if __name__ == "__main__":
+    main()
 
 
 # print("\033[F\033[2K" * n, end="", flush=True) (clears n amount of lines)

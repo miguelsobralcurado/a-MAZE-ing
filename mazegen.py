@@ -24,7 +24,7 @@ Access:
 
 from __future__ import annotations
 
-from typing import List, Tuple, Dict, Generator, Set, Optional, Iterator
+from typing import List, Tuple, Dict, Generator, Set, Optional, Iterator, Union
 from collections import deque
 import random
 
@@ -74,7 +74,7 @@ class MazeGrid:
                                 for _ in range(height)]
         self.width = width
         self.height = height
-        self.pat_coords: Set[Coord] | None = None
+        self.pat_coords: Union[Set[Coord], None] = None
 
     def add_pattern(self, pattern: List[str]) -> set[Coord]:
         """Place a `#`-based pattern centered in the grid.
@@ -520,8 +520,8 @@ class MazeGenerator:
         )
 
     @staticmethod
-    def solve(cells: List[list[int]], entry: tuple[int, int],
-              exit: tuple[int, int]) -> Tuple[list[Coord], str]:
+    def solve(cells: CellGrid, entry: Coord,
+              exit: Coord) -> Tuple[list[Coord], str]:
         """Solve a maze using breadth-first search.
 
         The returned path is guaranteed to be one of the shortest paths in
@@ -574,16 +574,18 @@ class MazeGenerator:
         return coords, path
 
 
-def main():
+def main() -> None:
     """Run a small demo that generates and solves a maze."""
     entry = (0, 0)
     exit = (9, 8)
     maze_gen = MazeGenerator(10, 10, entry, exit, 0, False, "prim")
 
 #    logo = maze_gen.logo
-
-    if maze_gen.validate_entry_exit():
+    try:
+        maze_gen.validate_entry_exit()
         print("Entry and exit values validated")
+    except Exception:
+        pass
 
     maze_generator = maze_gen.generate_maze()
     # Generator passo a passo do algoritmo

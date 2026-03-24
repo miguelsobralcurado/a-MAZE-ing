@@ -3,10 +3,14 @@ import time
 import random
 from typing import Optional, Any
 
+Coord = tuple[int, int]
+PathGrid = list[list[str]]
+CellGrid = list[list[int]]
+
 
 class AsciiRender:
     def __init__(self, width: int, height: int,
-                 maze_entry: list[int], maze_exit: list[int]) -> None:
+                 maze_entry: Coord, maze_exit: Coord) -> None:
         self.width = width
         self.height = height
         self.maze_entry = maze_entry
@@ -17,7 +21,7 @@ class AsciiRender:
         self.height = height
 
     def blank_grid(self, type: str = "int") -> list[list[Any]]:
-        grid = []
+        grid: list[list[Any]] = []
         for i in range(self.height):
             grid.append([])
             for _ in range(self.width):
@@ -28,18 +32,17 @@ class AsciiRender:
         return grid
 
     def draw_maze(self,
-                  grid: list[list[int]],
-                  path: Optional[tuple[list[tuple], str]] = None) -> None:
-        self.maze_pieces = []
-        self.maze_color = []
+                  grid: CellGrid,
+                  path: Optional[PathGrid] = None) -> None:
+        self.maze_pieces: list[list[list[str]]] = []
+        self.maze_color: CellGrid = []
         x = 0
         y = 0
-        if path is None:
-            path_grid = self.blank_grid()
-        elif isinstance(path, list):
+        path_grid: list[list[Any]] = []
+        if isinstance(path, list) and len(path) > 0:
             path_grid = path
         else:
-            path_grid = self.draw_path(self.blank_grid("str"), path)
+            path_grid = self.blank_grid("str")
         for row in grid:
             r = []
             for _ in row:
@@ -53,8 +56,8 @@ class AsciiRender:
             y += 1
 
     def draw_path(self,
-                  empty_grid: list[list[str]],
-                  f_path: tuple[list[tuple], str]) -> list[list[str]]:
+                  empty_grid: PathGrid,
+                  f_path: tuple[list[Coord], str]) -> PathGrid:
         i = 0
         coords, string = f_path
         for coord in coords:
@@ -66,19 +69,17 @@ class AsciiRender:
 
     def calc_piece(self, curr_cell: int,
                    path: Optional[str] = None,
-                   x: int = 0, y: int = 0) -> set[str]:
+                   x: int = 0, y: int = 0) -> list[str]:
         directions = {"N": "🮧", "E": "🮥", "S": "🮦", "W": "🮤", "C": "🯅"}
-        if curr_cell == 42:
-            return
         cell_base = [0, 0, 0, 0]
         i = [0, 8]
         for n in cell_base:
             if curr_cell > 0 and i[1] <= curr_cell:
                 curr_cell -= i[1]
                 n += 1
-                i[1] = i[1] / 2
+                i[1] = i[1] // 2
             else:
-                i[1] = i[1] / 2
+                i[1] = i[1] // 2
             cell_base[i[0]] = n
             i[0] += 1
         connect = [[" │", " │", " │"],
@@ -94,9 +95,8 @@ class AsciiRender:
         if cell_base[3] == 0:
             connect[3] = ["┘   └"]
         center = " "
-        if isinstance(path, str):
-            if path != "":
-                center = directions[path]
+        if isinstance(path, str) and path != "":
+            center = directions[path]
         if (y, x) == self.maze_entry:
             center = "🮮"
         elif (y, x) == self.maze_exit:
@@ -110,7 +110,7 @@ class AsciiRender:
 
         return [cell_top1, cell_top2, cell_mid1, cell_bot2, cell_bot1]
 
-    def set_colors(self, logo_coords: set[tuple[int, int]]) -> list[list[int]]:
+    def set_colors(self, logo_coords: set[Coord] | None) -> CellGrid:
         color_grid = self.blank_grid()
         if logo_coords is not None:
             for cell in logo_coords:
@@ -141,7 +141,7 @@ class AsciiRender:
             color = off_color
         return color
 
-    def builder(self, colors: list[list[int]],
+    def builder(self, colors: CellGrid,
                 alt_color: bool = False) -> None:
         x = 0
         y = 0
@@ -181,9 +181,9 @@ class Animator:
         self.curr_load = 0
         self.max_load = 50
         self.dots = 1
-        self.last_frame = []
+        self.last_frame: list[Any] = []
 
-    def loading(self, type: str) -> str:
+    def loading(self, type: str) -> None:
         if type == "start":
             if self.curr_load < 20:
                 load_message = "LOADING MAZE"
@@ -260,19 +260,22 @@ class Animator:
         self.loading("gen")
         self.last_frame = [grid, path, color_grid]
 
-    def anim_path(self, solution: tuple[list[tuple], str],
+    def anim_path(self, solution: tuple[list[Coord], str],
                   color: bool, anim_speed: float) -> None:
         i = 0
         coords, path = solution
         if anim_speed < 0.5:
             anim_speed = anim_speed * 2
-        for coord in coords:
+        for _ in coords:
             if i < len(path):
                 curr_frame = (coords[:(i + 1)], (path[:i] + "C"))
             else:
                 curr_frame = solution
             i += 1
-            self.to_animate.draw_maze(self.last_frame[0], curr_frame)
+            curr_path = self.to_animate.draw_path(self.to_animate.
+                                                  blank_grid("str"),
+                                                  curr_frame)
+            self.to_animate.draw_maze(self.last_frame[0], curr_path)
             self.to_animate.builder(self.last_frame[2], color)
             self.loading("path")
             time.sleep(anim_speed)
