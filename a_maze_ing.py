@@ -158,7 +158,7 @@ def parse_config(filepath: str) -> Dict[str, Any]:
 
 
 def format_coords(to_format: str) -> Coord:
-    """Parse a coordinate string in `x,y` format into internal `(row, column)` order.
+    """Parse a coordinate string in `x,y` format into internal `(row, column)`.
 
     The input uses `x,y`, but the internal maze representation uses `(y, x)`.
 
@@ -508,22 +508,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-# print("\033[F\033[2K" * n, end="", flush=True) (clears n amount of lines)
-# 0  = all open
-# 1  = N closed
-# 2  = E closed
-# 3  = NE closed
-# 4  = S closed
-# 5  = NS closed
-# 6  = ES closed
-# 7  = NES closed
-# 8  = W closed
-# 9  = NW closed
-# 10 = EW closed
-# 11 = NEW closed
-# 12 = SW closed
-# 13 = NSW closed
-# 14 = ESW closed
-# 15 = NESW closed

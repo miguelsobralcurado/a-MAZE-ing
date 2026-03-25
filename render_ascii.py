@@ -105,13 +105,15 @@ class AsciiRender:
 
         Each coordinate in the solution path is annotated with the direction
         letter that should be displayed at that position. The final coordinate
-        may remain empty if the path string is shorter than the coordinate list.
+        may remain empty if the path string is shorter than the coordinate
+        list.
 
         Args:
             empty_grid: Preallocated empty string grid.
             f_path: Tuple containing:
                 - an ordered list of coordinates
-                - a direction string using `N`, `E`, `S`, `W`, and optionally `C`
+                - a direction string using `N`, `E`, `S`, `W`, and optionally
+                `C` for current.
 
         Returns:
             The same grid object with path markers written into it.
@@ -148,7 +150,13 @@ class AsciiRender:
         Returns:
             A list of five strings representing the rendered cell.
         """
-        directions = {"N": "🮧", "E": "🮥", "S": "🮦", "W": "🮤", "C": "🯅"}
+        directions = {
+            "N": "🮧",
+            "E": "🮥",
+            "S": "🮦",
+            "W": "🮤",
+            "C": "🯅"
+        }
         cell_base = [0, 0, 0, 0]
         i = [0, 8]
         for n in cell_base:
@@ -417,21 +425,3 @@ class Animator:
             self.loading("path")
             time.sleep(anim_speed)
             os.system('clear')
-
-# print("\033[F\033[2K" * n, end="", flush=True) (clears n amount of lines)
-# 0  = all open
-# 1  = N closed
-# 2  = E closed
-# 3  = NE closed
-# 4  = S closed
-# 5  = NS closed
-# 6  = ES closed
-# 7  = NES closed
-# 8  = W closed
-# 9  = NW closed
-# 10 = EW closed
-# 11 = NEW closed
-# 12 = SW closed
-# 13 = NSW closed
-# 14 = ESW closed
-# 15 = NESW closed
