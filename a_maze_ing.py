@@ -54,6 +54,20 @@ def validate_values(config: Dict[str, str]) -> None:
         sys.exit(1)
 
 
+def validate_logo(logo_coords: set[Coord] | None,
+                  entry: Coord,
+                  exit: Coord) -> None:
+    try:
+        for coord in logo_coords:
+            if coord == entry:
+                raise Error("Error: Entry cannot be on top of the 42 logo")
+            if coord == exit:
+                raise Error("Error: Exit cannot be on top of the 42 logo")
+    except Error as e:
+        print(e)
+        sys.exit(1)
+
+
 def parse_config(filepath: str) -> Dict[str, Any]:
     parsed = {}
     try:
@@ -151,6 +165,7 @@ def main() -> None:
                              perfect, algorithm)
 #    gen_grid = maze_gen.maze_grid.cells
     logo = maze_gen.logo
+    validate_logo(logo, entry, exit)
     maze = AsciiRender(maze_gen.width, maze_gen.height,
                        maze_gen.entry, maze_gen.exit)
     speed_types = {"off": 0, "slow": 0.3, "normal": 0.1, "fast": 0.03}
