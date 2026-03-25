@@ -10,11 +10,11 @@
     <img src="https://img.shields.io/github/last-commit/miguelsobralcurado/a-MAZE-ing?style=for-the-badge" />
     <img src="https://img.shields.io/github/contributors/miguelsobralcurado/a-MAZE-ing?style=for-the-badge" />
 </p>
-<table>
+<table align="center">
     <tbody>
         <tr>
-            <td align="right" valign="top" width="14.28%"><a href="https://github.com/miguelsobralcurado"><img src="https://avatars.githubusercontent.com/u/174656941?v=4" width="100px;" alt="Miguel Sobral Curado"/><br /><sub><b>Miguel Sobral Curado</b></sub></a><br /><a href="#question-miguelsobralcurado" title="Answering Questions">💬</a></td>
-            <td align="left" valign="top" width="14.28%"><a href="https://github.com/Lyokoigawa"><img src="https://avatars.githubusercontent.com/u/78232506?v=4" width="100px;" alt="Lyokoigawa"/><br /><sub><b>Lyokoigawa</b></sub></a><br /><a href="#question-lyokoigawa" title="Answering Questions">💬</a>
+            <td align="center" valign="top" width="16%"><a href="https://github.com/miguelsobralcurado"><img src="https://avatars.githubusercontent.com/u/174656941?v=4" width="100px;" alt="Miguel Sobral Curado"/><br /><sub><b>Miguel Sobral Curado</b></sub></a><br /><a href="#question-miguelsobralcurado" title="Answering Questions">💬</a></td>
+            <td align="center" valign="top" width="14%"><a href="https://github.com/Lyokoigawa"><img src="https://avatars.githubusercontent.com/u/78232506?v=4" width="100px;" alt="Lyokoigawa"/><br /><sub><b>Lyokoigawa</b></sub></a><br /><a href="#question-lyokoigawa" title="Answering Questions">💬</a>
         </tr>
     </tbody>
 </table>
