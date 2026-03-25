@@ -5,7 +5,22 @@
 <p align="center">
   Procedurally generating mazes one cell at a time!
 </p>
+<p align="center">
+    <img src="https://img.shields.io/github/languages/top/miguelsobralcurado/a-MAZE-ing?style=for-the-badge" />
+    <img src="https://img.shields.io/github/last-commit/miguelsobralcurado/a-MAZE-ing?style=for-the-badge" />
+    <img src="https://img.shields.io/github/contributors/miguelsobralcurado/a-MAZE-ing?style=for-the-badge" />
+</p>
+<table>
+    <tbody>
+        <tr>
+            <td align="right" valign="top" width="14.28%"><a href="https://github.com/miguelsobralcurado"><img src="https://avatars.githubusercontent.com/u/174656941?v=4" width="100px;" alt="Lyokoigawa"/><br /><sub><b>Miguel Sobral Curado</b></sub></a><br /><a href="#question-kentcdodds" title="Answering Questions">💬</a> <a href="https://github.com/all-contributors/allcontributors.org/commits?author=kentcdodds" title="Documentation">📖</a></td>
+            <td align="left" valign="top" width="14.28%"><a href="https://github.com/Lyokoigawa"><img src="https://avatars.githubusercontent.com/u/78232506?v=4" width="100px;" alt="Lyokoigawa"/><br /><sub><b>Lyokoigawa</b></sub></a><br /><a href="#question-kentcdodds" title="Answering Questions">💬</a> <a href="https://github.com/all-contributors/allcontributors.org/commits?author=kentcdodds" title="Documentation">📖</a></td>
+        </tr>
+    </tbody>
+</table>
 
+https://shields.io/badges/git-hub-last-commit
+https://shields.io/badges/git-hub-contributors
 
 ## Description
 

@@ -274,7 +274,13 @@ class AsciiRender:
 
 
 class Animator:
+    """Animate maze generation and path rendering in the terminal."""
     def __init__(self, to_animate: AsciiRender) -> None:
+        """Initialize the animator.
+
+        Args:
+            to_animate: Renderer used to draw each animation frame.
+        """
         self.to_animate = to_animate
         self.curr_load = 0
         self.max_load = 50
@@ -282,6 +288,14 @@ class Animator:
         self.last_frame: list[Any] = []
 
     def loading(self, type: str) -> None:
+        """Render a progress bar and status message.
+
+        Args:
+            animation_type: Animation phase identifier. Supported values are:
+                - `"start"`
+                - `"gen"`
+                - `"path"`
+        """
         if type == "start":
             if self.curr_load < 20:
                 load_message = "LOADING MAZE"
@@ -311,7 +325,17 @@ class Animator:
               ("─" * (self.max_load - self.curr_load)))
 
     def load_maze(self,
-                  color: bool, anim_speed: float) -> None:
+                  color: bool) -> None:
+        """Animate an initial maze-loading sequence.
+
+        Args:
+            color: Whether to use the alternate color scheme.
+            anim_speed: Requested animation speed in seconds.
+
+        Notes:
+            The current implementation uses fixed sleep values for the loading
+            sequence and does not directly apply `anim_speed`.
+        """
         x = 0
         y = 0
         blank_grid = self.to_animate.blank_grid()
@@ -353,6 +377,14 @@ class Animator:
                     path: list[list[str]],
                     color_grid: list[list[int]],
                     color: bool,) -> None:
+        """Render one animation frame for the current maze state.
+
+        Args:
+            grid: Maze cell grid to render.
+            path: Current path overlay grid.
+            color_grid: Grid of render color codes.
+            color: Whether to use the alternate color theme.
+        """
         self.to_animate.draw_maze(grid, path)
         self.to_animate.builder(color_grid, color)
         self.loading("gen")
@@ -360,6 +392,13 @@ class Animator:
 
     def anim_path(self, solution: tuple[list[Coord], str],
                   color: bool, anim_speed: float) -> None:
+        """Animate the progressive reveal of the solution path.
+
+        Args:
+            solution: Tuple containing path coordinates and direction string.
+            color: Whether to use the alternate color theme.
+            anim_speed: Delay between frames in seconds.
+        """
         i = 0
         coords, path = solution
         if anim_speed < 0.5:
