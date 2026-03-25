@@ -12,15 +12,35 @@ CellGrid = list[list[int]]
 
 
 class Error(Exception):
+    """Custom exception for maze validation and runtime errors."""
     def __init__(self, message: str) -> None:
+        """Initialize the exception with a human-readable message.
+
+        Args:
+            message: Error message describing the failure.
+        """
         super().__init__(message)
 
 
 def validate_keys(config: Dict[str, str]) -> None:
+    """Validate that all required configuration keys are present.
+
+    Args:
+        config: Parsed configuration mapping from key to raw string value.
+
+    Raises:
+        SystemExit: If any required key is missing.
+    """
     try:
-        required = ["WIDTH", "HEIGHT",
-                    "ENTRY", "EXIT",
-                    "OUTPUT_FILE", "PERFECT", "ALGORITHM"]
+        required = [
+            "WIDTH",
+            "HEIGHT",
+            "ENTRY",
+            "EXIT",
+            "OUTPUT_FILE",
+            "PERFECT",
+            "ALGORITHM"
+        ]
         for k in required:
             if k not in config:
                 raise ValueError
@@ -31,6 +51,17 @@ def validate_keys(config: Dict[str, str]) -> None:
 
 
 def validate_values(config: Dict[str, str]) -> None:
+    """Validate configuration values after parsing.
+
+    This function checks maze dimensions, entry/exit positions, and the
+    selected generation algorithm.
+
+    Args:
+        config: Parsed configuration mapping from key to raw string value.
+
+    Raises:
+        SystemExit: If any configuration value is invalid.
+    """
     try:
         width = int(config["WIDTH"])
         height = int(config["HEIGHT"])
@@ -50,25 +81,52 @@ def validate_values(config: Dict[str, str]) -> None:
         if config["ALGORITHM"] not in ["prim", "dfs"]:
             raise ValueError("Error: Invalid algorithm. Use prim or dfs")
     except ValueError as e:
-        print(e)
+        print(e, file=sys.stderr)
         sys.exit(1)
 
 
 def validate_logo(logo_coords: set[Coord] | None,
                   entry: Coord,
                   exit: Coord) -> None:
+    """Ensure entry and exit do not overlap blocked logo coordinates.
+
+    Args:
+        logo_coords: Set of blocked coordinates occupied by the embedded logo,
+            or `None` if no logo was generated.
+        entry: Maze entry coordinate as `(row, column)`.
+        exit: Maze exit coordinate as `(row, column)`.
+
+    Raises:
+        SystemExit: If the entry or exit overlaps a logo coordinate.
+    """
     try:
-        for coord in logo_coords:
-            if coord == entry:
-                raise Error("Error: Entry cannot be on top of the 42 logo")
-            if coord == exit:
-                raise Error("Error: Exit cannot be on top of the 42 logo")
+        if logo_coords is not None:
+            for coord in logo_coords:
+                if coord == entry:
+                    raise Error("Error: Entry cannot be on top of the 42 logo")
+                if coord == exit:
+                    raise Error("Error: Exit cannot be on top of the 42 logo")
     except Error as e:
-        print(e)
+        print(e, file=sys.stderr)
         sys.exit(1)
 
 
 def parse_config(filepath: str) -> Dict[str, Any]:
+    """Parse a key-value configuration file.
+
+    Blank lines and comment lines beginning with `#` are ignored.
+    Keys are normalized to uppercase.
+
+    Args:
+        filepath: Path to the configuration file.
+
+    Returns:
+        A dictionary of configuration keys to raw string values.
+
+    Raises:
+        SystemExit: If the file cannot be read, contains invalid syntax, or
+            fails semantic validation.
+    """
     parsed = {}
     try:
         with open(filepath, "r") as config:
@@ -100,16 +158,41 @@ def parse_config(filepath: str) -> Dict[str, Any]:
 
 
 def format_coords(to_format: str) -> Coord:
+    """Parse a coordinate string in `x,y` format into internal `(row, column)` order.
+
+    The input uses `x,y`, but the internal maze representation uses `(y, x)`.
+
+    Args:
+        to_format: Coordinate string formatted as `x,y`.
+
+    Returns:
+        A coordinate tuple as `(row, column)`.
+
+    Raises:
+        SystemExit: If the coordinate format is invalid.
+    """
     try:
         x, y = map(int, to_format.split(","))
         return (y, x)
     except ValueError:
         print(f"Error: Invalid coordinate format '{to_format}'. "
-              "Expected format: 'x,y'")
+              "Expected format: 'x,y'", file=sys.stderr)
         sys.exit(1)
 
 
 def format_maze(maze_grid: CellGrid) -> PathGrid:
+    """Convert an integer maze grid into an uppercase hexadecimal string grid.
+
+    Each integer cell is transformed into its hexadecimal representation
+    without the `0x` prefix.
+
+    Args:
+        maze_grid: Maze grid encoded as integer wall bitmasks.
+
+    Returns:
+        A new grid where each cell is represented as an uppercase hexadecimal
+        string.
+    """
     f_maze: list[list[Any]] = maze_grid
     for row in f_maze:
         for cell in row:
@@ -122,7 +205,25 @@ def create_output(maze_grid: CellGrid,
                   output_fname: str,
                   maze: AsciiRender,
                   path_str: str = "") -> None:
-    # f_maze = format_maze(maze_grid)
+    """Write the generated maze and optional solution path to an output file.
+
+    The file format is:
+
+    1. Maze rows encoded as uppercase hexadecimal digits.
+    2. A blank line.
+    3. Entry coordinate as `row,column`.
+    4. Exit coordinate as `row,column`.
+    5. Optional path string using directional letters.
+
+    Args:
+        maze_grid: Final generated maze grid.
+        output_fname: Destination output file path.
+        maze: ASCII renderer instance providing entry and exit coordinates.
+        path_str: Optional solution string using directional characters.
+
+    Raises:
+        None explicitly. Errors are reported to standard error.
+    """
     try:
         with open(output_fname, "w") as file:
             for row in maze_grid:
@@ -133,15 +234,30 @@ def create_output(maze_grid: CellGrid,
             file.write(f"{maze.maze_exit[0]},{maze.maze_exit[1]}\n")
             file.write(path_str + "\n")
     except IOError as e:
-        print(f"Error: Unexpected error writing to file {e}")
+        print(f"Error: Unexpected error writing to file {e}", file=sys.stderr)
 
 
 def main() -> None:
+    """Run the interactive maze generation and visualization program.
+
+    The program:
+
+    - parses the configuration file passed on the command line,
+    - creates a maze generator and ASCII renderer,
+    - allows interactive generation and visualization,
+    - optionally animates the generation and path solving,
+    - writes the latest generated maze to the configured output file.
+
+    Raises:
+        None explicitly. Fatal errors terminate the process with `sys.exit`.
+    """
     if len(sys.argv) != 2:
         print("Error: Incorrect number of arguments called. Expected 1",
               file=sys.stderr)
         sys.exit(1)
+
     config = parse_config(sys.argv[1])
+
     width = int(config["WIDTH"])
     height = int(config["HEIGHT"])
     output_file = config["OUTPUT_FILE"]
@@ -150,6 +266,7 @@ def main() -> None:
     exit = format_coords(config["EXIT"])
     seed_val = int(config["SEED"]) if "SEED" in config else 0
     algorithm = config["ALGORITHM"]
+
     command = ""
     color = False
     show_path = False
@@ -161,14 +278,22 @@ def main() -> None:
     seed = True
     debug = False
     maze_seed = 0
+
     maze_gen = MazeGenerator(width, height, entry, exit, seed_val,
                              perfect, algorithm)
-#    gen_grid = maze_gen.maze_grid.cells
     logo = maze_gen.logo
+
     validate_logo(logo, entry, exit)
+
     maze = AsciiRender(maze_gen.width, maze_gen.height,
                        maze_gen.entry, maze_gen.exit)
-    speed_types = {"off": 0, "slow": 0.3, "normal": 0.1, "fast": 0.03}
+
+    speed_types: dict[str, float] = {
+        "off": 0,
+        "slow": 0.3,
+        "normal": 0.1,
+        "fast": 0.03
+    }
     grid = [[9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
             [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
             [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],

@@ -9,18 +9,51 @@ CellGrid = list[list[int]]
 
 
 class AsciiRender:
+    """Render a maze grid as styled ASCII/Unicode art.
+
+    This class converts the internal maze bitmask representation into a
+    multi-line textual view suitable for terminal output. It can also overlay
+    a path and apply colors for the entry, exit, and optional blocked logo.
+    """
     def __init__(self, width: int, height: int,
                  maze_entry: Coord, maze_exit: Coord) -> None:
+        """Initialize the renderer for a maze of a given size.
+
+        Args:
+            width: Number of maze columns.
+            height: Number of maze rows.
+            maze_entry: Entry coordinate as `(row, column)`.
+            maze_exit: Exit coordinate as `(row, column)`.
+        """
         self.width = width
         self.height = height
         self.maze_entry = maze_entry
         self.maze_exit = maze_exit
 
     def set_proportions(self, width: int, height: int) -> None:
+        """Update the renderer dimensions.
+
+        Args:
+            width: New number of maze columns.
+            height: New number of maze rows.
+        """
         self.width = width
         self.height = height
 
     def blank_grid(self, type: str = "int") -> list[list[Any]]:
+        """Create an empty grid matching the renderer dimensions.
+
+        Args:
+            grid_type: Type of blank grid to produce:
+                - `"int"` for an integer grid filled with `0`
+                - `"str"` for a string grid filled with `""`
+
+        Returns:
+            A 2D grid of the requested type.
+
+        Raises:
+            ValueError: If `grid_type` is not `"int"` or `"str"`.
+        """
         grid: list[list[Any]] = []
         for i in range(self.height):
             grid.append([])
@@ -34,6 +67,16 @@ class AsciiRender:
     def draw_maze(self,
                   grid: CellGrid,
                   path: Optional[PathGrid] = None) -> None:
+        """Convert a maze grid into renderable character pieces.
+
+        This method populates `self.maze_pieces`, where each maze cell becomes
+        a five-line Unicode representation. If a path grid is provided, the
+        corresponding path glyph is drawn in each cell.
+
+        Args:
+            grid: Maze cell grid encoded as wall bitmasks.
+            path: Optional grid of path markers aligned with the maze grid.
+        """
         self.maze_pieces: list[list[list[str]]] = []
         self.maze_color: CellGrid = []
         x = 0
@@ -58,6 +101,21 @@ class AsciiRender:
     def draw_path(self,
                   empty_grid: PathGrid,
                   f_path: tuple[list[Coord], str]) -> PathGrid:
+        """Overlay a solution path onto a blank string grid.
+
+        Each coordinate in the solution path is annotated with the direction
+        letter that should be displayed at that position. The final coordinate
+        may remain empty if the path string is shorter than the coordinate list.
+
+        Args:
+            empty_grid: Preallocated empty string grid.
+            f_path: Tuple containing:
+                - an ordered list of coordinates
+                - a direction string using `N`, `E`, `S`, `W`, and optionally `C`
+
+        Returns:
+            The same grid object with path markers written into it.
+        """
         i = 0
         coords, string = f_path
         for coord in coords:
@@ -70,6 +128,26 @@ class AsciiRender:
     def calc_piece(self, curr_cell: int,
                    path: Optional[str] = None,
                    x: int = 0, y: int = 0) -> list[str]:
+        """Convert one maze cell into a 5-line Unicode drawing.
+
+        The input cell uses bitmask walls:
+
+        - 1 = NORTH wall
+        - 2 = EAST wall
+        - 4 = SOUTH wall
+        - 8 = WEST wall
+
+        A cleared bit means an opening exists in that direction.
+
+        Args:
+            curr_cell: Integer wall bitmask for the current cell.
+            path: Optional path marker to draw in the cell center.
+            x: Column index of the cell.
+            y: Row index of the cell.
+
+        Returns:
+            A list of five strings representing the rendered cell.
+        """
         directions = {"N": "🮧", "E": "🮥", "S": "🮦", "W": "🮤", "C": "🯅"}
         cell_base = [0, 0, 0, 0]
         i = [0, 8]
@@ -111,6 +189,20 @@ class AsciiRender:
         return [cell_top1, cell_top2, cell_mid1, cell_bot2, cell_bot1]
 
     def set_colors(self, logo_coords: set[Coord] | None) -> CellGrid:
+        """Build a color-code grid for rendering.
+
+        Color codes:
+            - 0: normal maze cell
+            - 1: blocked logo cell
+            - 2: maze entry
+            - 3: maze exit
+
+        Args:
+            logo_coords: Optional set of coordinates reserved for the logo.
+
+        Returns:
+            A grid of integer color codes aligned with the maze dimensions.
+        """
         color_grid = self.blank_grid()
         if logo_coords is not None:
             for cell in logo_coords:
@@ -123,6 +215,15 @@ class AsciiRender:
         return color_grid
 
     def color_picker(self, code: int, alt_color: bool) -> str:
+        """Return the ANSI escape sequence for a given render code.
+
+        Args:
+            code: Integer color code for the current cell.
+            alt_color: Whether to use the alternate maze color theme.
+
+        Returns:
+            ANSI escape sequence string for terminal coloring.
+        """
         color = "\x1b[0m"
         color_42 = "\x1b[95m"
         maze_entry = "\x1b[92m"
@@ -143,6 +244,15 @@ class AsciiRender:
 
     def builder(self, colors: CellGrid,
                 alt_color: bool = False) -> None:
+        """Print the fully rendered maze to the terminal.
+
+        This method assumes `draw_maze()` has already populated
+        `self.maze_pieces`.
+
+        Args:
+            colors: Grid of color codes aligned with the maze cells.
+            alt_color: Whether to use the alternate maze frame/cell theme.
+        """
         x = 0
         y = 0
         z = 0
@@ -161,18 +271,6 @@ class AsciiRender:
                 x = 0
             z = 0
         print(frame_color + "└" + ("─────────" * (self.width)) + "┘")
-
-
-# class Animator:
-#     def __init__(self, to_animate: AsciiRender) -> None:
-#         self.to_animate = to_animate
-
-#     def print_frame(self, grid: list[list[int]],
-#                     path: list[list[int]],
-#                     color_grid: list[list[int]],
-#                     color: bool,) -> None:
-#         self.to_animate.draw_maze(grid, path)
-#         self.to_animate.builder(color_grid, color)
 
 
 class Animator:
