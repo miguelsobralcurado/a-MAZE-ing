@@ -363,7 +363,7 @@ def main() -> None:
                 color_grid = maze.set_colors(logo)
                 path_grid = []
                 if animator is True:
-                    animate.load_maze(color, speed_types[anim_speed])
+                    animate.load_maze(color)
                 for next in maze_generator:
                     generated = next
                     if animator is True:
