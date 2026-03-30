@@ -3,7 +3,7 @@
 <h1 align="center">🧩 a-MAZE-ing</h1>
 
 <p align="center">
-    <img src="https://github.com/miguelsobralcurado/a-MAZE-ing/media/a-maze-ing.png" alt="Screenshot of the terminal">
+    <img src="[https://github.com/miguelsobralcurado/a-MAZE-ing/media/a-maze-ing.png](https://github.com/miguelsobralcurado/a-MAZE-ing/blob/main/media/a-maze-ing.png)" alt="Screenshot of the terminal">
 </p>
 <p align="center">
   Procedurally generating mazes one cell at a time! Something something Daedalus.
